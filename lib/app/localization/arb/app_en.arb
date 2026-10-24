@@ -1,0 +1,496 @@
+{
+  "appTitle": "Coin Atelier",
+  "tagline": "Sort thoughtfully. Merge beautifully. Every move makes sense.",
+  "loading": "Opening the workshop…",
+  "loadFailed": "We couldn't open the puzzle collection.",
+  "retry": "Try again",
+  "recoveredFromBackup": "Your latest save was damaged, so we restored the last good copy.",
+  "recoveredReset": "Your save couldn't be read, so a fresh profile was started. The damaged file was kept for support.",
+  "saveFailed": "Couldn't save just now. We'll keep trying.",
+  "sessionReset": "This level was updated, so it starts fresh. Your other progress is safe.",
+  "ok": "OK",
+  "cancel": "Cancel",
+  "close": "Close",
+  "welcomeTitle": "Welcome to the Atelier",
+  "welcomeBody": "Stack matching coins until they fuse. A short hands-on lesson shows you how.",
+  "startTutorial": "Start the lesson",
+  "tutorialMove": "Tap the stack topped with two rubies, then tap the empty tray to move them.",
+  "tutorialUndo": "Changed your mind? Tap Undo to take a move back. Undo is always free.",
+  "tutorialRedo": "Now move the rubies to the empty tray again.",
+  "tutorialFuse": "A tray full of matching coins seals into your cabinet. Move the jade pair onto the single jade.",
+  "tutorialFinish": "Finish the board: move the last ruby onto its pair.",
+  "tutorialFollow": "Follow the glowing stacks for this lesson.",
+  "skipText": "Hide tip",
+  "continueButton": "Continue",
+  "levelN": "Level {n}",
+  "@levelN": {
+    "placeholders": {
+      "n": {
+        "type": "int"
+      }
+    }
+  },
+  "chapters": "Chapters",
+  "cabinet": "Cabinet",
+  "shop": "Shop",
+  "settings": "Settings",
+  "giltAmount": "{n} gilt",
+  "@giltAmount": {
+    "placeholders": {
+      "n": {
+        "type": "int"
+      }
+    }
+  },
+  "dailyGift": "Daily gift",
+  "claimGilt": "Claim {n} gilt",
+  "@claimGilt": {
+    "placeholders": {
+      "n": {
+        "type": "int"
+      }
+    }
+  },
+  "giftClaimed": "Gift collected. Another one tomorrow — no streak to keep.",
+  "campaignComplete": "Every level solved! Replay any level from the chapter map.",
+  "chapterN": "Chapter {n}",
+  "@chapterN": {
+    "placeholders": {
+      "n": {
+        "type": "int"
+      }
+    }
+  },
+  "chapter1": "First Light",
+  "chapter2": "The Forge",
+  "chapter3": "Veiled Vault",
+  "chapter4": "Frostworks",
+  "chapter1Desc": "Sort and seal matching coins.",
+  "chapter2Desc": "Fuse coins into higher tiers.",
+  "chapter3Desc": "Some coins stay veiled until uncovered.",
+  "chapter4Desc": "Frost seals coins until nearby fusing thaws them.",
+  "chapterProgress": "{done} of {total} solved",
+  "@chapterProgress": {
+    "placeholders": {
+      "done": {
+        "type": "int"
+      },
+      "total": {
+        "type": "int"
+      }
+    }
+  },
+  "levelLocked": "Finish the previous level to unlock this one.",
+  "objectiveClear": "Seal every coin",
+  "objectiveForge": "Forge {count} tier {tier} coins",
+  "@objectiveForge": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      },
+      "tier": {
+        "type": "int"
+      }
+    }
+  },
+  "progressFraction": "{done}/{total}",
+  "@progressFraction": {
+    "placeholders": {
+      "done": {
+        "type": "int"
+      },
+      "total": {
+        "type": "int"
+      }
+    }
+  },
+  "coinsLeft": "{n, plural, =0{No coins left} =1{1 coin left} other{{n} coins left}}",
+  "@coinsLeft": {
+    "placeholders": {
+      "n": {
+        "type": "int"
+      }
+    }
+  },
+  "movesCount": "{n, plural, =1{1 move} other{{n} moves}}",
+  "@movesCount": {
+    "placeholders": {
+      "n": {
+        "type": "int"
+      }
+    }
+  },
+  "fuseRule": "{n} alike fuse",
+  "@fuseRule": {
+    "placeholders": {
+      "n": {
+        "type": "int"
+      }
+    }
+  },
+  "undo": "Undo",
+  "hint": "Hint",
+  "extraTray": "Extra tray",
+  "restart": "Restart",
+  "pause": "Pause",
+  "rejectMismatch": "Coins only land on a matching coin or an empty tray.",
+  "rejectFull": "That tray is full.",
+  "rejectDestinationFrozen": "Frosted coins can't be covered.",
+  "rejectSourceFrozen": "That coin is sealed by frost. Fuse coins in this or a neighbouring tray to thaw it.",
+  "rejectCannotLift": "Nothing to lift from there.",
+  "rejectNothingToUndo": "No moves to undo yet.",
+  "rejectBonusUsed": "The extra tray is already in place.",
+  "rejectNoneLeft": "None left. Solve levels or visit the shop for more.",
+  "hintSearching": "Looking for a good move…",
+  "hintNone": "No hint available right now. Undo or Restart are always free.",
+  "hintShown": "Hint: move from the tray with the up arrow to the tray with the down arrow.",
+  "deadEnd": "This board can't be finished from here. Undo or restart — both are free.",
+  "blockedTitle": "No moves left",
+  "blockedBody": "No coin can move right now. Pick how to continue — nothing here costs money.",
+  "backToMap": "Back to map",
+  "pausedTitle": "Paused",
+  "resume": "Resume",
+  "restartConfirmTitle": "Restart level?",
+  "restartConfirmBody": "The board returns to its starting layout and your current moves are cleared.",
+  "howToPlay": "How to play",
+  "ruleMove": "Tap a stack to lift its top coins, then tap a tray to drop them.",
+  "ruleLand": "Coins land on an empty tray or on coins of the same kind.",
+  "ruleFuse": "When {n} alike meet at the top of a tray, they fuse.",
+  "@ruleFuse": {
+    "placeholders": {
+      "n": {
+        "type": "int"
+      }
+    }
+  },
+  "ruleTier": "Below the top tier they fuse into one higher-tier coin; at the top tier they seal into your cabinet.",
+  "ruleFrost": "Frosted coins thaw when coins fuse in their tray or a neighbouring one.",
+  "ruleHidden": "Veiled coins reveal themselves when they become the top coin.",
+  "winTitle": "Solved!",
+  "winMoves": "Solved in {n, plural, =1{1 move} other{{n} moves}}",
+  "@winMoves": {
+    "placeholders": {
+      "n": {
+        "type": "int"
+      }
+    }
+  },
+  "rewardEarned": "+{n} gilt",
+  "@rewardEarned": {
+    "placeholders": {
+      "n": {
+        "type": "int"
+      }
+    }
+  },
+  "rewardAlready": "Reward already collected for this level.",
+  "tutorialBonus": "+{n} hints for finishing the lesson",
+  "@tutorialBonus": {
+    "placeholders": {
+      "n": {
+        "type": "int"
+      }
+    }
+  },
+  "nextLevel": "Next level",
+  "replay": "Replay",
+  "newFamily": "New coin for your cabinet: {name}",
+  "@newFamily": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "introTitleForge": "New: Forging",
+  "introBodyForge": "Coins now have tiers. Fusing coins below the top tier makes one coin of the next tier. Fuse top-tier coins to seal them.",
+  "introTitleHidden": "New: Veiled coins",
+  "introBodyHidden": "Some coins are veiled. They reveal themselves when they become the top coin and cannot join a fuse while veiled.",
+  "introTitleFrost": "New: Frost seals",
+  "introBodyFrost": "Frosted coins can't be lifted or covered. Each fuse in their tray or a neighbouring tray thaws them by one.",
+  "gotIt": "Got it",
+  "cabinetTitle": "Collector's Cabinet",
+  "cabinetFamilies": "Coin families",
+  "undiscovered": "Not yet discovered",
+  "finishesTitle": "Coin finishes",
+  "finishesNote": "Finishes only change how coins look. They never change the rules.",
+  "finishEnamel": "Enamel",
+  "finishSatin": "Satin",
+  "finishGilded": "Gilded",
+  "useFinish": "Use",
+  "inUse": "In use",
+  "buyForGilt": "{n} gilt",
+  "@buyForGilt": {
+    "placeholders": {
+      "n": {
+        "type": "int"
+      }
+    }
+  },
+  "familyJade": "Jade Leaf",
+  "familyRuby": "Ruby Flame",
+  "familySapphire": "Sapphire Wave",
+  "familyAmber": "Amber Sun",
+  "familyAmethyst": "Amethyst Star",
+  "familyPearl": "Pearl Moon",
+  "familyOnyx": "Onyx Prism",
+  "familyCoral": "Coral Clover",
+  "tierN": "Tier {n}",
+  "@tierN": {
+    "placeholders": {
+      "n": {
+        "type": "int"
+      }
+    }
+  },
+  "shopTitle": "Shop",
+  "shopEarnedSection": "Spend earned gilt",
+  "shopHintPack": "3 hints",
+  "shopHintPackDesc": "Each hint highlights one move that leads toward a solution.",
+  "shopBonusTray": "Extra tray",
+  "shopBonusTrayDesc": "Adds one empty tray to a level. Undo history before it is cleared.",
+  "owned": "You have {n}",
+  "@owned": {
+    "placeholders": {
+      "n": {
+        "type": "int"
+      }
+    }
+  },
+  "notEnoughGilt": "Not enough gilt yet. Solving levels earns more.",
+  "purchasedItem": "Added to your satchel.",
+  "shopFreeSection": "Free with a video (optional)",
+  "watchForHint": "Watch a video for 1 hint",
+  "adUnavailable": "No videos are available right now. You can still earn hints by solving levels.",
+  "adDismissed": "The video was closed early, so no hint was added.",
+  "adRewarded": "1 hint added. Thanks!",
+  "shopStoreSection": "Store",
+  "removeAdsTitle": "Remove ads",
+  "removeAdsDesc": "Removes the occasional ad between levels. Optional reward videos stay available only if you choose them.",
+  "removeAdsOwned": "Ads removed. Thank you for supporting the Atelier!",
+  "storeUnavailable": "The store isn't available on this device right now.",
+  "purchasePending": "Purchase pending. It will apply as soon as the store confirms it.",
+  "purchaseFailed": "The purchase didn't go through. You weren't charged by the game.",
+  "restorePurchases": "Restore purchases",
+  "restoreDone": "Restore requested. Any owned purchases will apply automatically.",
+  "settingsAudio": "Sound & feel",
+  "soundEffects": "Sound effects",
+  "music": "Music",
+  "haptics": "Vibration",
+  "settingsAccess": "Accessibility",
+  "reducedMotion": "Reduced motion",
+  "reducedMotionDesc": "Shorter, calmer animations and no particles.",
+  "colorBlind": "Colour-blind assist",
+  "colorBlindDesc": "Bolder rim patterns and family letters on every coin.",
+  "language": "Language",
+  "systemLanguage": "Device language",
+  "settingsPrivacy": "Privacy & data",
+  "analyticsConsent": "Share anonymous gameplay statistics",
+  "analyticsConsentDesc": "Level and session counts only — never personal data. Off unless you turn it on.",
+  "privacy": "Privacy",
+  "support": "Help & support",
+  "credits": "Credits",
+  "resetProgress": "Reset local progress",
+  "resetConfirmTitle": "Erase all progress?",
+  "resetConfirmBody": "This permanently deletes your levels, gilt and items on this device. It cannot be undone.",
+  "resetConfirmAction": "Erase",
+  "devOverlay": "Developer overlay",
+  "privacyBody": "Coin Atelier works fully offline. Your progress is stored only on this device. Gameplay statistics are collected only if you opt in, and contain no personal information. No advertising or purchase services are active in this build.",
+  "supportBody": "Having trouble? Undo and Restart are always free, and every level has a verified solution. If something looks wrong, the details below help us investigate. They contain no personal data.",
+  "supportContactPending": "A support contact will be listed here before release.",
+  "appVersion": "Version {v}",
+  "@appVersion": {
+    "placeholders": {
+      "v": {
+        "type": "String"
+      }
+    }
+  },
+  "recentIssues": "Recent diagnostic codes",
+  "noIssues": "No issues recorded.",
+  "creditsBody": "Design, art, levels and sound are original to Coin Atelier. Sounds are synthesised in code.\n\nFonts: Fredoka (The Fredoka Project Authors) and Nunito (The Nunito Project Authors), both under the SIL Open Font License 1.1.\n\nBuilt with Flutter and Flame.",
+  "a11yStack": "Tray {index}: {count, plural, =0{empty} =1{1 coin} other{{count} coins}}. {top}",
+  "@a11yStack": {
+    "placeholders": {
+      "index": {
+        "type": "int"
+      },
+      "count": {
+        "type": "int"
+      },
+      "top": {
+        "type": "String"
+      }
+    }
+  },
+  "a11yTop": "Top coin {name} tier {tier}",
+  "@a11yTop": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      },
+      "tier": {
+        "type": "int"
+      }
+    }
+  },
+  "a11ySelected": "Selected",
+  "a11yTarget": "Can drop here",
+  "unavailable": "Unavailable",
+  "deal": "Deal",
+  "dealsLeft": "{n, plural, =0{No deals left} =1{1 deal left} other{{n} deals left}}",
+  "@dealsLeft": {
+    "placeholders": {
+      "n": {
+        "type": "int"
+      }
+    }
+  },
+  "nextDeal": "Next",
+  "rejectNoDeals": "No deals left. Sort what's on the board.",
+  "rejectDealNoRoom": "Make room in the highlighted trays, then deal.",
+  "hintDeal": "Hint: press Deal now.",
+  "introTitleDeal": "New: Deals",
+  "introBodyDeal": "Press Deal to drop the next batch of coins into the trays. You can always see the next batch, and every level is solvable with its deals.",
+  "chainText": "Chain ×{n}!",
+  "@chainText": {
+    "placeholders": {
+      "n": {
+        "type": "int"
+      }
+    }
+  },
+  "goalSeal": "{name}: {n} left to seal",
+  "@goalSeal": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      },
+      "n": {
+        "type": "int"
+      }
+    }
+  },
+  "goalForge": "Tier {tier}: {n} left to forge",
+  "@goalForge": {
+    "placeholders": {
+      "tier": {
+        "type": "int"
+      },
+      "n": {
+        "type": "int"
+      }
+    }
+  },
+  "a11yDeal": "Deal next batch, {n, plural, =0{none left} =1{1 left} other{{n} left}}",
+  "@a11yDeal": {
+    "placeholders": {
+      "n": {
+        "type": "int"
+      }
+    }
+  },
+  "ruleDeal": "Deal drops the next batch of coins; the next batch is always shown.",
+  "workshopLevel": "Level {n}",
+  "@workshopLevel": {
+    "placeholders": {
+      "n": {
+        "type": "int"
+      }
+    }
+  },
+  "workshopUnlock": "Unlock",
+  "workshopTitle": "Workshop slot",
+  "workshopBody": "Adds a permanent empty tray to every level from now on. It never makes a level harder.",
+  "workshopUnlockFor": "Unlock for {n} gilt",
+  "@workshopUnlockFor": {
+    "placeholders": {
+      "n": {
+        "type": "int"
+      }
+    }
+  },
+  "workshopLocked": "Workshop slot, unlocks after level {n}",
+  "@workshopLocked": {
+    "placeholders": {
+      "n": {
+        "type": "int"
+      }
+    }
+  },
+  "workshopReady": "Workshop slot, unlock for {n} gilt",
+  "@workshopReady": {
+    "placeholders": {
+      "n": {
+        "type": "int"
+      }
+    }
+  },
+  "workshopUnlocked": "Workshop slot added!",
+  "themes": "Themes",
+  "themesTitle": "Coin Themes",
+  "themesSubtitle": "Play with the coins of your favourite currency. Every theme is free.",
+  "themeInUse": "In use",
+  "themeUse": "Use theme",
+  "themeApplied": "{name} theme applied",
+  "@themeApplied": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "themeCurrency": "{currency} ({symbol})",
+  "@themeCurrency": {
+    "placeholders": {
+      "currency": {
+        "type": "String"
+      },
+      "symbol": {
+        "type": "String"
+      }
+    }
+  },
+  "chapter5": "Grand Hall",
+  "chapter5Desc": "Bigger boards and more coins to sort.",
+  "chapter6": "Coin Rain",
+  "chapter6Desc": "Deals pour in fast. Keep room to spare.",
+  "chapter7": "Twin Forge",
+  "chapter7Desc": "Fuse up a tier and fill forge orders.",
+  "chapter8": "Shadow Market",
+  "chapter8Desc": "Most coins stay veiled until you dig them out.",
+  "chapter9": "Winter Mint",
+  "chapter9Desc": "Deep frost needs fusing nearby, twice.",
+  "chapter10": "Tall Towers",
+  "chapter10Desc": "Tall trays take many coins to fill.",
+  "chapter11": "Midnight Vault",
+  "chapter11Desc": "Veils and frost together.",
+  "chapter12": "Royal Treasury",
+  "chapter12Desc": "Forge tiers in the dark.",
+  "chapter13": "Glacier Bank",
+  "chapter13Desc": "Frozen coins on the forge.",
+  "chapter14": "Grand Bazaar",
+  "chapter14Desc": "All eight coins on the biggest boards.",
+  "chapter15": "Iron Mint",
+  "chapter15Desc": "Tall trays, hidden coins, big drops.",
+  "chapter16": "Crown Jewels",
+  "chapter16Desc": "Every trick at once.",
+  "chapter17": "Master Atelier",
+  "chapter17Desc": "The final test of a master sorter.",
+  "difficultyHard": "Hard",
+  "difficultyExpert": "Super hard",
+  "difficultyBonus": "{label} level · ×{mult} gilt",
+  "@difficultyBonus": {
+    "placeholders": {
+      "label": {
+        "type": "String"
+      },
+      "mult": {
+        "type": "String"
+      }
+    }
+  },
+  "fillRule": "Fill a tray to seal",
+  "introTitleFill": "New: Taller trays",
+  "introBodyFill": "A tray seals when it is full of one kind of coin. Taller trays need more coins to fill. Deals drop several coins at once, so keep room to spare."
+}

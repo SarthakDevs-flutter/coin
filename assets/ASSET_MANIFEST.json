@@ -1,0 +1,268 @@
+{
+  "manifestVersion": 1,
+  "note": "Coin art is drawn procedurally at runtime (lib/game/render/coin_art.dart); there are no coin sprite files.",
+  "assets": [
+    {
+      "id": "ambient_loop",
+      "path": "assets/audio/ambient_loop.wav",
+      "format": "wav",
+      "use": "music",
+      "source": "tool/generate_audio.dart (synthesised in code)",
+      "creator": "Coin Atelier",
+      "license": "Original work, all rights reserved",
+      "attribution": null
+    },
+    {
+      "id": "campaign",
+      "path": "assets/levels/campaign.json",
+      "format": "json",
+      "use": "level pack",
+      "source": "tool/generate_levels.dart",
+      "creator": "Coin Atelier",
+      "license": "Original work, all rights reserved",
+      "attribution": null
+    },
+    {
+      "id": "fredoka",
+      "path": "assets/fonts/Fredoka.ttf",
+      "format": "ttf",
+      "use": "font",
+      "source": "https://github.com/google/fonts",
+      "creator": "The Fredoka Project Authors",
+      "license": "SIL Open Font License 1.1 (assets/fonts/Fredoka-OFL.txt)",
+      "attribution": "Credits screen"
+    },
+    {
+      "id": "icon_1024",
+      "path": "assets/branding/icon_1024.png",
+      "format": "png",
+      "dimensions": "1024x1024",
+      "use": "launcher icon / splash source",
+      "source": "tool/render_brand_assets_test.dart (rendered from lib/game/render/coin_art.dart)",
+      "creator": "Coin Atelier",
+      "license": "Original work, all rights reserved",
+      "attribution": null
+    },
+    {
+      "id": "nunito",
+      "path": "assets/fonts/Nunito.ttf",
+      "format": "ttf",
+      "use": "font",
+      "source": "https://github.com/google/fonts",
+      "creator": "The Nunito Project Authors",
+      "license": "SIL Open Font License 1.1 (assets/fonts/Nunito-OFL.txt)",
+      "attribution": "Credits screen"
+    },
+    {
+      "id": "sfx_chain",
+      "path": "assets/audio/sfx_chain.wav",
+      "format": "wav",
+      "use": "sfx",
+      "source": "tool/generate_audio.dart (synthesised in code)",
+      "creator": "Coin Atelier",
+      "license": "Original work, all rights reserved",
+      "attribution": null
+    },
+    {
+      "id": "sfx_deal",
+      "path": "assets/audio/sfx_deal.wav",
+      "format": "wav",
+      "use": "sfx",
+      "source": "tool/generate_audio.dart (synthesised in code)",
+      "creator": "Coin Atelier",
+      "license": "Original work, all rights reserved",
+      "attribution": null
+    },
+    {
+      "id": "sfx_deselect",
+      "path": "assets/audio/sfx_deselect.wav",
+      "format": "wav",
+      "use": "sfx",
+      "source": "tool/generate_audio.dart (synthesised in code)",
+      "creator": "Coin Atelier",
+      "license": "Original work, all rights reserved",
+      "attribution": null
+    },
+    {
+      "id": "sfx_fuse",
+      "path": "assets/audio/sfx_fuse.wav",
+      "format": "wav",
+      "use": "sfx",
+      "source": "tool/generate_audio.dart (synthesised in code)",
+      "creator": "Coin Atelier",
+      "license": "Original work, all rights reserved",
+      "attribution": null
+    },
+    {
+      "id": "sfx_invalid",
+      "path": "assets/audio/sfx_invalid.wav",
+      "format": "wav",
+      "use": "sfx",
+      "source": "tool/generate_audio.dart (synthesised in code)",
+      "creator": "Coin Atelier",
+      "license": "Original work, all rights reserved",
+      "attribution": null
+    },
+    {
+      "id": "sfx_land",
+      "path": "assets/audio/sfx_land.wav",
+      "format": "wav",
+      "use": "sfx",
+      "source": "tool/generate_audio.dart (synthesised in code)",
+      "creator": "Coin Atelier",
+      "license": "Original work, all rights reserved",
+      "attribution": null
+    },
+    {
+      "id": "sfx_land2",
+      "path": "assets/audio/sfx_land2.wav",
+      "format": "wav",
+      "use": "sfx",
+      "source": "tool/generate_audio.dart (synthesised in code)",
+      "creator": "Coin Atelier",
+      "license": "Original work, all rights reserved",
+      "attribution": null
+    },
+    {
+      "id": "sfx_land3",
+      "path": "assets/audio/sfx_land3.wav",
+      "format": "wav",
+      "use": "sfx",
+      "source": "tool/generate_audio.dart (synthesised in code)",
+      "creator": "Coin Atelier",
+      "license": "Original work, all rights reserved",
+      "attribution": null
+    },
+    {
+      "id": "sfx_land4",
+      "path": "assets/audio/sfx_land4.wav",
+      "format": "wav",
+      "use": "sfx",
+      "source": "tool/generate_audio.dart (synthesised in code)",
+      "creator": "Coin Atelier",
+      "license": "Original work, all rights reserved",
+      "attribution": null
+    },
+    {
+      "id": "sfx_land5",
+      "path": "assets/audio/sfx_land5.wav",
+      "format": "wav",
+      "use": "sfx",
+      "source": "tool/generate_audio.dart (synthesised in code)",
+      "creator": "Coin Atelier",
+      "license": "Original work, all rights reserved",
+      "attribution": null
+    },
+    {
+      "id": "sfx_land6",
+      "path": "assets/audio/sfx_land6.wav",
+      "format": "wav",
+      "use": "sfx",
+      "source": "tool/generate_audio.dart (synthesised in code)",
+      "creator": "Coin Atelier",
+      "license": "Original work, all rights reserved",
+      "attribution": null
+    },
+    {
+      "id": "sfx_reveal",
+      "path": "assets/audio/sfx_reveal.wav",
+      "format": "wav",
+      "use": "sfx",
+      "source": "tool/generate_audio.dart (synthesised in code)",
+      "creator": "Coin Atelier",
+      "license": "Original work, all rights reserved",
+      "attribution": null
+    },
+    {
+      "id": "sfx_reward",
+      "path": "assets/audio/sfx_reward.wav",
+      "format": "wav",
+      "use": "sfx",
+      "source": "tool/generate_audio.dart (synthesised in code)",
+      "creator": "Coin Atelier",
+      "license": "Original work, all rights reserved",
+      "attribution": null
+    },
+    {
+      "id": "sfx_seal",
+      "path": "assets/audio/sfx_seal.wav",
+      "format": "wav",
+      "use": "sfx",
+      "source": "tool/generate_audio.dart (synthesised in code)",
+      "creator": "Coin Atelier",
+      "license": "Original work, all rights reserved",
+      "attribution": null
+    },
+    {
+      "id": "sfx_select",
+      "path": "assets/audio/sfx_select.wav",
+      "format": "wav",
+      "use": "sfx",
+      "source": "tool/generate_audio.dart (synthesised in code)",
+      "creator": "Coin Atelier",
+      "license": "Original work, all rights reserved",
+      "attribution": null
+    },
+    {
+      "id": "sfx_tap",
+      "path": "assets/audio/sfx_tap.wav",
+      "format": "wav",
+      "use": "sfx",
+      "source": "tool/generate_audio.dart (synthesised in code)",
+      "creator": "Coin Atelier",
+      "license": "Original work, all rights reserved",
+      "attribution": null
+    },
+    {
+      "id": "sfx_thaw",
+      "path": "assets/audio/sfx_thaw.wav",
+      "format": "wav",
+      "use": "sfx",
+      "source": "tool/generate_audio.dart (synthesised in code)",
+      "creator": "Coin Atelier",
+      "license": "Original work, all rights reserved",
+      "attribution": null
+    },
+    {
+      "id": "sfx_undo",
+      "path": "assets/audio/sfx_undo.wav",
+      "format": "wav",
+      "use": "sfx",
+      "source": "tool/generate_audio.dart (synthesised in code)",
+      "creator": "Coin Atelier",
+      "license": "Original work, all rights reserved",
+      "attribution": null
+    },
+    {
+      "id": "sfx_whoosh",
+      "path": "assets/audio/sfx_whoosh.wav",
+      "format": "wav",
+      "use": "sfx",
+      "source": "tool/generate_audio.dart (synthesised in code)",
+      "creator": "Coin Atelier",
+      "license": "Original work, all rights reserved",
+      "attribution": null
+    },
+    {
+      "id": "sfx_win",
+      "path": "assets/audio/sfx_win.wav",
+      "format": "wav",
+      "use": "sfx",
+      "source": "tool/generate_audio.dart (synthesised in code)",
+      "creator": "Coin Atelier",
+      "license": "Original work, all rights reserved",
+      "attribution": null
+    },
+    {
+      "id": "splash_logo",
+      "path": "assets/branding/splash_logo.png",
+      "format": "png",
+      "dimensions": "432x432",
+      "use": "launcher icon / splash source",
+      "source": "tool/render_brand_assets_test.dart (rendered from lib/game/render/coin_art.dart)",
+      "creator": "Coin Atelier",
+      "license": "Original work, all rights reserved",
+      "attribution": null
+    }
+  ]
+}

@@ -1,0 +1,30 @@
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: subosito/flutter-action@v2
+        with:
+          flutter-version: 3.47.7
+          channel: stable
+          cache: true
+      - run: flutter pub get
+      - name: Format
+        run: dart format --output=none --set-exit-if-changed lib test tool
+      - name: Analyze
+        run: flutter analyze
+      - name: Unit, property and integration tests
+        run: flutter test test
+      - name: Level pack schema + solver validation
+        run: dart run tool/validate_levels.dart
+      - name: Required assets and licences
+        run: dart run tool/check_assets.dart
+      - name: Build release APK
+        run: flutter build apk --release
