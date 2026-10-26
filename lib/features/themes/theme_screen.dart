@@ -12,6 +12,9 @@ import '../../game/render/theme/coin_theme.dart';
 import '../../game/render/theme/coin_themes.dart';
 import '../common/scene_backdrop.dart';
 import '../common/theme_scope.dart';
+import '../common/game_icons.dart';
+import '../common/game_ui.dart';
+import '../common/tab_page.dart';
 import '../common/widgets.dart';
 
 /// Pick the coins, board and scenery to play with. Purely cosmetic and free:
@@ -40,67 +43,62 @@ class ThemeScreen extends ConsumerWidget {
       showToast(context, l.themeApplied(t.name));
     }
 
-    return Scaffold(
-      appBar: AppBar(title: Text(l.themesTitle)),
-      extendBodyBehindAppBar: true,
-      body: AtelierBackground(
-        child: SafeArea(
-          child: LayoutBuilder(
-            builder: (context, c) {
-              // One column on phones, two on tablets.
-              final cols = c.maxWidth >= 720 ? 2 : 1;
-              final themes = CoinThemes.all;
-              return CustomScrollView(
-                slivers: [
-                  SliverPadding(
-                    padding: const EdgeInsets.fromLTRB(
-                      AtelierSpacing.md,
-                      4,
-                      AtelierSpacing.md,
-                      14,
-                    ),
-                    sliver: SliverToBoxAdapter(
-                      child: Text(
-                        l.themesSubtitle,
-                        textAlign: TextAlign.center,
-                        style: const TextStyle(
-                          color: AtelierColors.textOnDark,
-                          fontWeight: FontWeight.w700,
-                          shadows: [
-                            Shadow(color: Color(0xCC000000), blurRadius: 6),
-                          ],
-                        ),
-                      ),
+    return TabPage(
+      title: l.themesTitle,
+      child: LayoutBuilder(
+        builder: (context, c) {
+          // One column on phones, two on tablets.
+          final cols = c.maxWidth >= 720 ? 2 : 1;
+          final themes = CoinThemes.all;
+          return CustomScrollView(
+            slivers: [
+              SliverPadding(
+                padding: const EdgeInsets.fromLTRB(
+                  AtelierSpacing.md,
+                  4,
+                  AtelierSpacing.md,
+                  14,
+                ),
+                sliver: SliverToBoxAdapter(
+                  child: Text(
+                    l.themesSubtitle,
+                    textAlign: TextAlign.center,
+                    style: const TextStyle(
+                      color: AtelierColors.textOnDark,
+                      fontWeight: FontWeight.w700,
+                      shadows: [
+                        Shadow(color: Color(0xCC000000), blurRadius: 6),
+                      ],
                     ),
                   ),
-                  SliverPadding(
-                    padding: const EdgeInsets.fromLTRB(
-                      AtelierSpacing.md,
-                      0,
-                      AtelierSpacing.md,
-                      32,
-                    ),
-                    sliver: SliverGrid.builder(
-                      gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                        crossAxisCount: cols,
-                        mainAxisSpacing: 16,
-                        crossAxisSpacing: 16,
-                        mainAxisExtent: 268,
-                      ),
-                      itemCount: themes.length,
-                      itemBuilder: (context, i) => ThemeCard(
-                        theme: themes[i],
-                        selected: themes[i].id == selected,
-                        finish: finish,
-                        onTap: () => choose(themes[i]),
-                      ),
-                    ),
+                ),
+              ),
+              SliverPadding(
+                padding: const EdgeInsets.fromLTRB(
+                  AtelierSpacing.md,
+                  0,
+                  AtelierSpacing.md,
+                  32,
+                ),
+                sliver: SliverGrid.builder(
+                  gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                    crossAxisCount: cols,
+                    mainAxisSpacing: 16,
+                    crossAxisSpacing: 16,
+                    mainAxisExtent: 268,
                   ),
-                ],
-              );
-            },
-          ),
-        ),
+                  itemCount: themes.length,
+                  itemBuilder: (context, i) => ThemeCard(
+                    theme: themes[i],
+                    selected: themes[i].id == selected,
+                    finish: finish,
+                    onTap: () => choose(themes[i]),
+                  ),
+                ),
+              ),
+            ],
+          );
+        },
       ),
     );
   }
@@ -281,37 +279,15 @@ class _ThemeAction extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final l = context.l10n;
-    return AnimatedSwitcher(
-      duration: AtelierMotion.ui,
-      child: GoldFrame(
-        key: ValueKey(selected),
-        radius: 16,
-        width: 2,
-        shadow: false,
-        fill: selected
-            ? const [Color(0xFF5BD872), AtelierColors.primaryDeep]
-            : const [Color(0xFF5A3A1E), Color(0xFF2E1A0A)],
-        padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 7),
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(
-              selected ? Icons.check_rounded : Icons.palette_rounded,
-              size: 18,
-              color: AtelierColors.textOnDark,
-            ),
-            const SizedBox(width: 6),
-            Text(
-              selected ? l.themeInUse : l.themeUse,
-              style: const TextStyle(
-                fontFamily: AtelierFonts.display,
-                fontWeight: FontWeight.w600,
-                fontSize: 15,
-                color: AtelierColors.textOnDark,
-              ),
-            ),
-          ],
-        ),
+    // The whole card is the tap target; this only shows the state.
+    return IgnorePointer(
+      child: GameButton(
+        label: selected ? l.themeInUse : l.themeUse,
+        icon: selected ? GameGlyph.check : GameGlyph.cities,
+        tone: selected ? GameTone.green : GameTone.blue,
+        fontSize: 16,
+        height: 44,
+        onPressed: () {},
       ),
     );
   }
@@ -352,15 +328,17 @@ class _CheckBadge extends StatelessWidget {
   const _CheckBadge();
 
   @override
-  Widget build(BuildContext context) => const SizedBox.square(
-    dimension: 38,
-    child: GoldFrame(
-      shape: BoxShape.circle,
-      width: 2.5,
-      fill: [Color(0xFF5BD872), AtelierColors.primaryDeep],
-      child: Icon(Icons.check_rounded, color: Colors.white, size: 24),
+  Widget build(BuildContext context) => const ExcludeSemantics(
+    child: GameRoundButton(
+      icon: GameGlyph.check,
+      tooltip: '',
+      tone: GameTone.green,
+      size: 40,
+      onPressed: _noop,
     ),
   );
+
+  static void _noop() {}
 }
 
 /// The skyline band of a scene, scaled to the card's width.

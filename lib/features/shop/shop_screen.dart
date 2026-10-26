@@ -7,6 +7,10 @@ import '../../application/ports/ports.dart';
 import '../../application/providers.dart';
 import '../../domain/economy/economy.dart';
 import '../../domain/progression/player_profile.dart';
+import '../../game/render/theme/coin_themes.dart';
+import '../common/game_icons.dart';
+import '../common/game_ui.dart';
+import '../common/tab_page.dart';
 import '../common/widgets.dart';
 
 final _removeAdsProduct = FutureProvider<StoreProduct?>((ref) async {
@@ -103,229 +107,272 @@ class _ShopScreenState extends ConsumerState<ShopScreen> {
     });
     final product = ref.watch(_removeAdsProduct);
 
-    return Scaffold(
-      appBar: AppBar(
-        title: Text(l.shopTitle),
-        actions: [
-          Padding(
-            padding: const EdgeInsets.only(right: 12),
-            child: GiltBadge(amount: profile.gilt),
-          ),
-        ],
-      ),
-      extendBodyBehindAppBar: true,
-      body: AtelierBackground(
-        child: SafeArea(
-          child: ListView(
-            padding: const EdgeInsets.fromLTRB(
-              AtelierSpacing.md,
-              0,
-              AtelierSpacing.md,
-              32,
-            ),
+    final hints = profile.count(InventoryItem.hint);
+    final trays = profile.count(InventoryItem.bonusTray);
+    final storeReady = !profile.removeAds && product.value != null;
+    return TabPage(
+      title: l.shopTitle,
+      child: ListView(
+        padding: const EdgeInsets.fromLTRB(14, 4, 14, 28),
+        children: [
+          GameSectionTitle(l.shopEarnedSection),
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              SectionTitle(l.shopEarnedSection),
-              _OfferTile(
-                icon: Icons.lightbulb_rounded,
-                title: l.shopHintPack,
-                description: l.shopHintPackDesc,
-                owned: l.owned(profile.count(InventoryItem.hint)),
-                action: l.buyForGilt(ShopOffer.hintPack.cost),
-                affordable: profile.gilt >= ShopOffer.hintPack.cost,
-                onPressed: () => _buy(ShopOffer.hintPack),
+              Expanded(
+                child: _OfferCard(
+                  glyph: GameGlyph.hint,
+                  title: l.shopHintPack,
+                  description: l.shopHintPackDesc,
+                  owned: hints,
+                  button: _GiltButton(
+                    cost: ShopOffer.hintPack.cost,
+                    affordable: profile.gilt >= ShopOffer.hintPack.cost,
+                    onPressed: () => _buy(ShopOffer.hintPack),
+                  ),
+                ),
               ),
-              const SizedBox(height: 12),
-              _OfferTile(
-                icon: Icons.add_box_rounded,
-                title: l.shopBonusTray,
-                description: l.shopBonusTrayDesc,
-                owned: l.owned(profile.count(InventoryItem.bonusTray)),
-                action: l.buyForGilt(ShopOffer.bonusTray.cost),
-                affordable: profile.gilt >= ShopOffer.bonusTray.cost,
-                onPressed: () => _buy(ShopOffer.bonusTray),
-              ),
-              SectionTitle(l.shopFreeSection),
-              _OfferTile(
-                icon: Icons.ondemand_video_rounded,
-                title: l.watchForHint,
-                description: s.ads.isConfigured
-                    ? l.shopHintPackDesc
-                    : l.adUnavailable,
-                action: s.ads.isConfigured ? l.watchForHint : l.unavailable,
-                busy: _watching,
-                affordable: s.ads.isConfigured,
-                onPressed: s.ads.isConfigured ? _watchForHint : null,
-              ),
-              SectionTitle(l.shopStoreSection),
-              _OfferTile(
-                icon: Icons.block_rounded,
-                title: l.removeAdsTitle,
-                description: profile.removeAds
-                    ? l.removeAdsOwned
-                    : l.removeAdsDesc,
-                action: profile.removeAds
-                    ? l.inUse
-                    : (product.value?.priceLabel ?? l.unavailable),
-                affordable: !profile.removeAds && product.value != null,
-                onPressed: !profile.removeAds && product.value != null
-                    ? () => ref
-                          .read(purchaseCoordinatorProvider.notifier)
-                          .buy('remove_ads')
-                    : null,
-              ),
-              const SizedBox(height: 12),
-              Center(
-                child: s.billing.isAvailable
-                    ? TextButton.icon(
-                        style: TextButton.styleFrom(
-                          foregroundColor: AtelierColors.textOnDark,
-                        ),
-                        onPressed: () => ref
-                            .read(purchaseCoordinatorProvider.notifier)
-                            .restore(),
-                        icon: const Icon(Icons.restore_rounded),
-                        label: Text(l.restorePurchases),
-                      )
-                    : Padding(
-                        padding: const EdgeInsets.all(8),
-                        child: Text(
-                          l.storeUnavailable,
-                          textAlign: TextAlign.center,
-                          style: const TextStyle(
-                            color: AtelierColors.textOnDarkMuted,
-                            fontWeight: FontWeight.w700,
-                          ),
-                        ),
-                      ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: _OfferCard(
+                  glyph: GameGlyph.extraTray,
+                  title: l.shopBonusTray,
+                  description: l.shopBonusTrayDesc,
+                  owned: trays,
+                  button: _GiltButton(
+                    cost: ShopOffer.bonusTray.cost,
+                    affordable: profile.gilt >= ShopOffer.bonusTray.cost,
+                    onPressed: () => _buy(ShopOffer.bonusTray),
+                  ),
+                ),
               ),
             ],
           ),
-        ),
+          GameSectionTitle(l.shopFreeSection),
+          _WideOffer(
+            glyph: GameGlyph.video,
+            title: l.watchForHint,
+            description: s.ads.isConfigured
+                ? l.shopHintPackDesc
+                : l.adUnavailable,
+            button: GameButton(
+              label: _watching ? '…' : l.watchForHint,
+              tone: GameTone.blue,
+              icon: GameGlyph.video,
+              fontSize: 16,
+              height: 48,
+              onPressed: s.ads.isConfigured && !_watching
+                  ? _watchForHint
+                  : null,
+            ),
+          ),
+          GameSectionTitle(l.shopStoreSection),
+          _WideOffer(
+            glyph: GameGlyph.noAds,
+            title: l.removeAdsTitle,
+            description: profile.removeAds ? l.removeAdsOwned : l.removeAdsDesc,
+            button: GameButton(
+              label: profile.removeAds
+                  ? l.inUse
+                  : (product.value?.priceLabel ?? l.unavailable),
+              tone: GameTone.green,
+              fontSize: 16,
+              height: 48,
+              onPressed: storeReady
+                  ? () => ref
+                        .read(purchaseCoordinatorProvider.notifier)
+                        .buy('remove_ads')
+                  : null,
+            ),
+          ),
+          const SizedBox(height: 14),
+          Center(
+            child: s.billing.isAvailable
+                ? GameButton(
+                    label: l.restorePurchases,
+                    tone: GameTone.walnut,
+                    icon: GameGlyph.restart,
+                    fontSize: 15,
+                    height: 44,
+                    onPressed: () => ref
+                        .read(purchaseCoordinatorProvider.notifier)
+                        .restore(),
+                  )
+                : Text(
+                    l.storeUnavailable,
+                    textAlign: TextAlign.center,
+                    style: const TextStyle(
+                      color: AtelierColors.textOnDarkMuted,
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
+          ),
+        ],
       ),
     );
   }
 }
 
-class _OfferTile extends StatelessWidget {
-  const _OfferTile({
-    required this.icon,
-    required this.title,
-    required this.description,
-    required this.action,
+/// Gold price button with the gilt coin; greyed (but still tappable, to
+/// explain why) when the player can't afford it.
+class _GiltButton extends StatelessWidget {
+  const _GiltButton({
+    required this.cost,
+    required this.affordable,
     required this.onPressed,
-    this.owned,
-    this.affordable = true,
-    this.busy = false,
   });
 
-  final IconData icon;
-  final String title;
-  final String description;
-  final String? owned;
-  final String action;
+  final int cost;
   final bool affordable;
-  final bool busy;
-  final VoidCallback? onPressed;
+  final VoidCallback onPressed;
 
   @override
-  Widget build(BuildContext context) => IvoryPanel(
-    padding: const EdgeInsets.all(14),
-    child: Row(
+  Widget build(BuildContext context) => GameButton(
+    label: '$cost',
+    tone: affordable ? GameTone.gold : GameTone.grey,
+    leading: const CoinIcon(
+      family: 'amber',
+      size: 24,
+      theme: CoinThemes.atelier,
+    ),
+    fontSize: 18,
+    height: 46,
+    expand: true,
+    onPressed: onPressed,
+  );
+}
+
+/// Shop tile: big icon on a glow, title, owned count and the price button.
+class _OfferCard extends StatelessWidget {
+  const _OfferCard({
+    required this.glyph,
+    required this.title,
+    required this.description,
+    required this.owned,
+    required this.button,
+  });
+
+  final GameGlyph glyph;
+  final String title;
+  final String description;
+  final int owned;
+  final Widget button;
+
+  @override
+  Widget build(BuildContext context) => GamePanel(
+    padding: const EdgeInsets.fromLTRB(10, 12, 10, 12),
+    child: Column(
       children: [
-        Container(
-          width: 52,
-          height: 52,
-          decoration: const BoxDecoration(
-            color: Color(0xFFF2E2C4),
-            shape: BoxShape.circle,
-          ),
-          child: Icon(icon, color: AtelierColors.accentDeep, size: 28),
-        ),
-        const SizedBox(width: 12),
-        Expanded(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                title,
-                style: Theme.of(context).textTheme.titleMedium
-                    ?.copyWith(color: AtelierColors.textOnLight),
-              ),
-              const SizedBox(height: 2),
-              Text(
-                description,
-                style: const TextStyle(
-                  color: AtelierColors.textOnLightMuted,
-                  fontWeight: FontWeight.w700,
-                  fontSize: 13,
+        Stack(
+          clipBehavior: Clip.none,
+          children: [
+            Container(
+              width: 92,
+              height: 92,
+              decoration: const BoxDecoration(
+                shape: BoxShape.circle,
+                gradient: RadialGradient(
+                  colors: [Color(0xFFFFF3B0), Color(0x00FFF3B0)],
                 ),
               ),
-              if (owned != null) ...[
-                const SizedBox(height: 4),
-                Text(
-                  owned!,
-                  style: const TextStyle(
-                    color: AtelierColors.primaryDeep,
-                    fontWeight: FontWeight.w800,
-                    fontSize: 13,
-                  ),
-                ),
-              ],
-            ],
+              alignment: Alignment.center,
+              child: GameIcon(glyph, size: 64),
+            ),
+            Positioned(
+              right: -6,
+              bottom: 4,
+              child: NoticeBadge('×$owned', tone: GameTone.blue),
+            ),
+          ],
+        ),
+        const SizedBox(height: 4),
+        Text(
+          title,
+          textAlign: TextAlign.center,
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
+          style: const TextStyle(
+            fontFamily: AtelierFonts.display,
+            fontWeight: FontWeight.w700,
+            fontSize: 18,
+            color: AtelierColors.textOnLight,
           ),
         ),
-        const SizedBox(width: 8),
-        ConstrainedBox(
-          constraints: const BoxConstraints(maxWidth: 120),
-          child: onPressed == null && !busy
-              // Unavailable: readable status chip, not a faded button.
-              ? Container(
-                  constraints: const BoxConstraints(
-                    minHeight: AtelierSpacing.tapTarget,
-                  ),
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 12,
-                    vertical: 6,
-                  ),
-                  alignment: Alignment.center,
-                  decoration: BoxDecoration(
-                    color: const Color(0xFFE9DFCB),
-                    borderRadius: BorderRadius.circular(24),
-                  ),
-                  child: Text(
-                    action,
-                    textAlign: TextAlign.center,
+        const SizedBox(height: 4),
+        Text(
+          description,
+          textAlign: TextAlign.center,
+          maxLines: 3,
+          overflow: TextOverflow.ellipsis,
+          style: const TextStyle(
+            color: AtelierColors.textOnLightMuted,
+            fontWeight: FontWeight.w700,
+            fontSize: 12,
+            height: 1.3,
+          ),
+        ),
+        const SizedBox(height: 10),
+        button,
+      ],
+    ),
+  );
+}
+
+/// Full-width offer: icon left, text, button underneath.
+class _WideOffer extends StatelessWidget {
+  const _WideOffer({
+    required this.glyph,
+    required this.title,
+    required this.description,
+    required this.button,
+  });
+
+  final GameGlyph glyph;
+  final String title;
+  final String description;
+  final Widget button;
+
+  @override
+  Widget build(BuildContext context) => GamePanel(
+    padding: const EdgeInsets.fromLTRB(12, 12, 12, 12),
+    child: Column(
+      children: [
+        Row(
+          children: [
+            GameIcon(glyph, size: 56),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    title,
                     style: const TextStyle(
                       fontFamily: AtelierFonts.display,
-                      fontWeight: FontWeight.w600,
-                      fontSize: 13,
+                      fontWeight: FontWeight.w700,
+                      fontSize: 18,
+                      color: AtelierColors.textOnLight,
+                    ),
+                  ),
+                  const SizedBox(height: 2),
+                  Text(
+                    description,
+                    maxLines: 3,
+                    overflow: TextOverflow.ellipsis,
+                    style: const TextStyle(
                       color: AtelierColors.textOnLightMuted,
+                      fontWeight: FontWeight.w700,
+                      fontSize: 12.5,
+                      height: 1.3,
                     ),
                   ),
-                )
-              : FilledButton(
-                  style: FilledButton.styleFrom(
-                    backgroundColor: affordable
-                        ? AtelierColors.primary
-                        : const Color(0xFFD6CDBE),
-                    foregroundColor: AtelierColors.textOnLight,
-                    minimumSize: const Size(0, AtelierSpacing.tapTarget),
-                    padding: const EdgeInsets.symmetric(horizontal: 12),
-                    textStyle: const TextStyle(
-                      fontFamily: AtelierFonts.display,
-                      fontWeight: FontWeight.w600,
-                      fontSize: 14,
-                    ),
-                  ),
-                  onPressed: busy ? null : onPressed,
-                  child: busy
-                      ? const SizedBox.square(
-                          dimension: 20,
-                          child: CircularProgressIndicator(strokeWidth: 2.5),
-                        )
-                      : Text(action, textAlign: TextAlign.center),
-                ),
+                ],
+              ),
+            ),
+          ],
         ),
+        const SizedBox(height: 10),
+        Align(alignment: Alignment.centerRight, child: button),
       ],
     ),
   );

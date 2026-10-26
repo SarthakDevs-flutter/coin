@@ -437,6 +437,32 @@ abstract final class DiscArt {
           );
         }
     }
+    final tint = coin.enamel;
+    if (tint != null) {
+      // Coloured enamel stripe round the edge: stacked coins show their
+      // family colour even when only the edge is visible.
+      final stripe = Path()..addPath(rail(0.32), Offset.zero);
+      for (var i = 32; i >= 0; i--) {
+        final pt = front(math.pi * i / 32, 0.68);
+        stripe.lineTo(pt.dx, pt.dy);
+      }
+      stripe.close();
+      canvas.drawPath(
+        stripe,
+        Paint()
+          ..shader = ui.Gradient.linear(
+            Offset(c.dx - r, 0),
+            Offset(c.dx + r, 0),
+            [
+              _mix(tint, const Color(0xFF000000), 0.45),
+              _mix(tint, const Color(0xFFFFFFFF), 0.25),
+              tint,
+              _mix(tint, const Color(0xFF000000), 0.5),
+            ],
+            const [0, 0.32, 0.6, 1],
+          ),
+      );
+    }
     if (coin.shape != CoinShape.round) {
       // Crisp creases where the flat sides meet.
       final sides = coin.shape == CoinShape.dodecagon ? 12 : 7;
@@ -465,6 +491,7 @@ abstract final class DiscArt {
       coin.value,
       m,
       strong: colorBlind,
+      tint: tint,
     );
     canvas.drawPath(
       band,
@@ -532,6 +559,7 @@ abstract final class DiscArt {
     String value,
     Metal m, {
     required bool strong,
+    Color? tint,
   }) {
     final size = t * 0.78;
     TextPainter tp(Color color, double s) => TextPainter(
@@ -559,13 +587,17 @@ abstract final class DiscArt {
       Rect.fromCenter(center: at, width: text.width + t * 0.7, height: t * 0.8),
       Radius.circular(t * 0.2),
     );
+    // Ivory plate on the coloured stripe; metal plate on bare metal.
+    final plateColors = tint != null
+        ? const [Color(0xFFFFFFFF), Color(0xFFFFF8EA), Color(0xFFE9DFC8)]
+        : [m.shine, m.light, m.base];
     canvas.drawRRect(
       plate,
       Paint()
         ..shader = ui.Gradient.linear(
           plate.outerRect.topCenter,
           plate.outerRect.bottomCenter,
-          [m.shine, m.light, m.base],
+          plateColors,
           const [0, 0.5, 1],
         ),
     );
@@ -574,10 +606,15 @@ abstract final class DiscArt {
       Paint()
         ..style = PaintingStyle.stroke
         ..strokeWidth = math.max(0.6, t * 0.06)
-        ..color = m.dark.withValues(alpha: 0.8),
+        ..color = tint != null
+            ? _mix(tint, const Color(0xFF000000), 0.35)
+            : m.dark.withValues(alpha: 0.8),
     );
     final o = at - Offset(text.width / 2, text.height / 2);
-    tp(strong ? const Color(0xFF000000) : m.deep, s).paint(canvas, o);
+    final ink = strong
+        ? const Color(0xFF000000)
+        : (tint != null ? _mix(tint, const Color(0xFF000000), 0.55) : m.deep);
+    tp(ink, s).paint(canvas, o);
   }
 
   static Color _mix(Color a, Color b, double t) => Color.lerp(a, b, t)!;

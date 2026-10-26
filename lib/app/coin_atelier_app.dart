@@ -8,6 +8,7 @@ import '../features/common/theme_scope.dart';
 import '../game/render/theme/coin_themes.dart';
 import 'app_lifecycle_coordinator.dart';
 import 'localization/gen/app_localizations.dart';
+import 'telemetry_coordinator.dart';
 import 'theme/app_theme.dart';
 
 class CoinAtelierApp extends ConsumerWidget {
@@ -42,7 +43,9 @@ class CoinAtelierApp extends ConsumerWidget {
       builder: (context, child) => CoinThemeScope(
         theme: CoinThemes.byId(themeId),
         reducedMotion: reducedMotion,
-        child: AppLifecycleCoordinator(child: child!),
+        child: AppLifecycleCoordinator(
+          child: TelemetryCoordinator(child: child!),
+        ),
       ),
       home: const BootScreen(),
     );

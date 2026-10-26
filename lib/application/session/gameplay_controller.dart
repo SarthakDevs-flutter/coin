@@ -12,6 +12,7 @@ import '../../domain/rules/rules_engine.dart';
 import '../../domain/solver/solver.dart';
 import '../ports/board_presenter.dart';
 import '../ports/ports.dart';
+import '../review/review_policy.dart';
 import 'game_session.dart';
 
 enum GameMessageKind {
@@ -48,6 +49,7 @@ final class WinSummary {
     required this.tutorialHints,
     required this.newFamilies,
     required this.nextLevelId,
+    this.askReview = false,
   });
 
   final int moves;
@@ -56,6 +58,9 @@ final class WinSummary {
   final int tutorialHints;
   final List<String> newFamilies;
   final String? nextLevelId;
+
+  /// Request a store rating when the player taps Next (instead of an ad).
+  final bool askReview;
 }
 
 final class GameplayState {
@@ -70,6 +75,7 @@ final class GameplayState {
     this.intro,
     this.sessionWasReset = false,
     this.message,
+    this.coach,
   });
 
   final GameSession session;
@@ -92,6 +98,9 @@ final class GameplayState {
   final bool sessionWasReset;
   final GameMessage? message;
 
+  /// One-time HUD tip being shown ('coach_hint' | 'coach_extraTray').
+  final String? coach;
+
   LevelDefinition get level => session.level;
 
   GameplayState copyWith({
@@ -104,6 +113,7 @@ final class GameplayState {
     String? Function()? intro,
     bool? sessionWasReset,
     GameMessage? Function()? message,
+    String? Function()? coach,
   }) => GameplayState(
     session: session,
     revision: revision ?? this.revision,
@@ -115,6 +125,7 @@ final class GameplayState {
     intro: intro != null ? intro() : this.intro,
     sessionWasReset: sessionWasReset ?? this.sessionWasReset,
     message: message != null ? message() : this.message,
+    coach: coach != null ? coach() : this.coach,
   );
 }
 
@@ -140,14 +151,39 @@ final class GameplayController extends Notifier<GameplayState?> {
     final scale = (40 * 40) / (coins * coins);
     return (base * scale).round().clamp(base ~/ 20, base);
   }
+
   static const Duration settleTimeout = Duration(seconds: 4);
   static const introducible = {'fill', 'deal', 'forge', 'hidden', 'frost'};
 
+  /// Early levels show the next solver move, free, after this much idling.
+  static const Duration idleNudgeDelay = Duration(seconds: 10);
+  static const int firstNudgeLevel = 2;
+  static const int lastNudgeLevel = 5;
+  static const int maxNudgesPerLevel = 3;
+
+  /// Extra-tray tip waits until the boards are big enough to need it.
+  static const int extraTrayTipLevel = 6;
+
+  static const reviewPolicy = ReviewPolicy();
+
   BoardPresenter? _presenter;
   int _messageSerial = 0;
+  bool _onScreen = false;
+
+  /// A level screen is open (app-open ads never cover one).
+  bool get isInLevel => _onScreen;
+  Timer? _idle;
+  int _nudges = 0;
+  int _tutorialStep = 0;
+
+  /// No restart and no blocked board since the level was opened.
+  bool _cleanAttempt = true;
 
   @override
-  GameplayState? build() => null;
+  GameplayState? build() {
+    ref.onDispose(() => _idle?.cancel());
+    return null;
+  }
 
   AppServices get _s => ref.read(servicesProvider);
   SaveController get _save => ref.read(saveProvider.notifier);
@@ -172,6 +208,7 @@ final class GameplayController extends Notifier<GameplayState?> {
   void open(String levelId) {
     final level = ref.read(packProvider).byId(levelId);
     if (level == null) return;
+    _onScreen = true;
     _presenter?.fastForward();
     final saved = ref.read(saveProvider).activeSession;
     GameSession? session;
@@ -187,6 +224,9 @@ final class GameplayController extends Notifier<GameplayState?> {
     // Slots unlocked since this session was saved join the board now.
     session.syncWorkshop(_profile.workshopSlots);
     final intro = level.introduces;
+    _nudges = 0;
+    _cleanAttempt = true;
+    _tutorialStep = session.tutorialStepIndex;
     state = GameplayState(
       session: session,
       revision: session.revision,
@@ -199,6 +239,7 @@ final class GameplayController extends Notifier<GameplayState?> {
           : null,
       blocked: session.phase == SessionPhase.blocked,
     );
+    _showCoach();
     _persistSession();
     _presenter?.showBoard(session.board, animate: false);
     _pushHighlights();
@@ -213,6 +254,7 @@ final class GameplayController extends Notifier<GameplayState?> {
     } else if (session.board.moveCount > 0) {
       _checkDeadEnd();
     }
+    _armIdle();
   }
 
   void dismissIntro() {
@@ -223,7 +265,47 @@ final class GameplayController extends Notifier<GameplayState?> {
     _save.updateProfile(
       (p) => p.copyWith(seenIntroductions: {...p.seenIntroductions, key}),
     );
+    _showCoach();
     _pushHighlights();
+    _armIdle();
+  }
+
+  /// Hides the HUD tip for good.
+  void dismissCoach() {
+    final key = state?.coach;
+    if (key == null) return;
+    state = state!.copyWith(coach: () => null);
+    _save.updateProfile(
+      (p) => p.copyWith(seenIntroductions: {...p.seenIntroductions, key}),
+    );
+  }
+
+  /// The player left the screen. An unfinished lesson counts as abandoned.
+  void leave() {
+    _idle?.cancel();
+    _onScreen = false;
+    final st = state;
+    if (st == null || !st.level.isTutorial || st.win != null) return;
+    _s.analytics.log(AnalyticsEvent.tutorialAbandoned, {
+      'level': st.level.id,
+      'step': st.session.tutorialStepIndex,
+    });
+  }
+
+  /// Asks the platform for a rating; called from the win sheet's Next.
+  Future<void> requestReview() async {
+    final st = state;
+    if (st == null || !(st.win?.askReview ?? false)) return;
+    final now = _s.clock.now();
+    await _save.updateSettings(
+      (s) => s.copyWith(reviewRequests: [...s.reviewRequests, now]),
+    );
+    _s.analytics.log(AnalyticsEvent.reviewRequested, {'level': st.level.id});
+    try {
+      await _s.review.request();
+    } on Object catch (e, stack) {
+      _s.crash.record(e, stack, context: {'where': 'review'});
+    }
   }
 
   void acknowledgeReset() {
@@ -243,6 +325,7 @@ final class GameplayController extends Notifier<GameplayState?> {
   void tapStack(String stackId) {
     final st = state;
     if (st == null || st.win != null || st.intro != null) return;
+    _armIdle();
     final outcome = st.session.tapStack(stackId);
     if (outcome.transition != null) {
       _onTransition(outcome.transition!);
@@ -263,6 +346,7 @@ final class GameplayController extends Notifier<GameplayState?> {
   void undo() {
     final st = state;
     if (st == null || st.win != null) return;
+    _armIdle();
     final outcome = st.session.undo();
     if (outcome.transition == null) {
       _reject(outcome, null);
@@ -277,6 +361,7 @@ final class GameplayController extends Notifier<GameplayState?> {
     final st = state;
     if (st == null) return;
     final outcome = st.session.restart();
+    _cleanAttempt = false;
     _s.analytics.log(AnalyticsEvent.levelRestarted, {'level': st.level.id});
     state = st.copyWith(win: () => null);
     _onTransition(outcome.transition!);
@@ -287,6 +372,7 @@ final class GameplayController extends Notifier<GameplayState?> {
   void deal() {
     final st = state;
     if (st == null || st.win != null || st.intro != null) return;
+    _armIdle();
     final outcome = st.session.deal();
     if (outcome.transition != null) {
       _dealBlocked = const {};
@@ -349,6 +435,7 @@ final class GameplayController extends Notifier<GameplayState?> {
     // Spend only after the tray was actually added.
     final spent = Economy.consume(_profile, InventoryItem.bonusTray);
     if (spent.isOk) _save.updateProfile((_) => spent.profile);
+    if (st.coach == 'coach_extraTray') dismissCoach();
     _s.analytics.log(AnalyticsEvent.boosterUsed, {
       'level': st.level.id,
       'item': 'bonusTray',
@@ -367,9 +454,11 @@ final class GameplayController extends Notifier<GameplayState?> {
       _message(GameMessageKind.rejectNoneLeft);
       return;
     }
+    if (st.coach == 'coach_hint') dismissCoach();
+    _idle?.cancel();
     final session = st.session;
     final rev = session.revision;
-    state = st.copyWith(hintBusy: true);
+    state = state!.copyWith(hintBusy: true);
     _message(GameMessageKind.hintSearching);
     SolveResult result;
     try {
@@ -437,6 +526,14 @@ final class GameplayController extends Notifier<GameplayState?> {
     );
     _persistSession();
     _pushHighlights();
+    _armIdle();
+    if (session.tutorialStepIndex > _tutorialStep) {
+      _tutorialStep = session.tutorialStepIndex;
+      _s.analytics.log(AnalyticsEvent.tutorialStep, {
+        'level': session.level.id,
+        'step': _tutorialStep,
+      });
+    }
     final settled = switch (t.kind) {
       TransitionKind.move =>
         _presenter?.playTransition(t) ?? Future<void>.value(),
@@ -458,6 +555,7 @@ final class GameplayController extends Notifier<GameplayState?> {
             });
             final now = state;
             if (now != null && identical(now.session, session)) {
+              _cleanAttempt = false;
               state = now.copyWith(blocked: true);
               _s.haptics.play(HapticKind.warning);
             }
@@ -514,6 +612,14 @@ final class GameplayController extends Notifier<GameplayState?> {
     await _save.commit(profile: profile, activeSession: () => null);
     if (!ref.mounted) return;
     final next = ref.read(packProvider).after(level.id);
+    _idle?.cancel();
+    final askReview = reviewPolicy.shouldRequest(
+      level: level,
+      firstClear: !before.completions.containsKey(level.id),
+      cleanAttempt: _cleanAttempt,
+      history: ref.read(saveProvider).settings.reviewRequests,
+      now: _s.clock.now(),
+    );
     state = state?.copyWith(
       win: () => WinSummary(
         moves: st.session.board.moveCount,
@@ -524,7 +630,9 @@ final class GameplayController extends Notifier<GameplayState?> {
             : 0,
         newFamilies: newFamilies,
         nextLevelId: next?.id,
+        askReview: askReview,
       ),
+      coach: () => null,
     );
     _pushHighlights();
     _s.audio.play(Sfx.win);
@@ -629,6 +737,91 @@ final class GameplayController extends Notifier<GameplayState?> {
     final session = _session;
     if (session == null || session.isOver) return;
     unawaited(_save.setActiveSession(session.toJson()));
+  }
+
+  /// Picks the next unseen HUD tip, if any. Intro cards always go first.
+  void _showCoach() {
+    final st = state;
+    if (st == null || st.intro != null || st.coach != null) return;
+    if (st.level.isTutorial || st.win != null) return;
+    final p = _profile;
+    final seen = p.seenIntroductions;
+    final String? key;
+    if (!seen.contains('coach_hint') && p.count(InventoryItem.hint) > 0) {
+      key = 'coach_hint';
+    } else if (st.level.number >= extraTrayTipLevel &&
+        !seen.contains('coach_extraTray') &&
+        p.count(InventoryItem.bonusTray) > 0) {
+      key = 'coach_extraTray';
+    } else {
+      key = null;
+    }
+    if (key == null) return;
+    state = st.copyWith(coach: () => key);
+    _s.analytics.log(AnalyticsEvent.coachTipShown, {'tip': key});
+  }
+
+  bool _nudgeable(GameplayState st) =>
+      !st.level.isTutorial &&
+      st.level.number >= firstNudgeLevel &&
+      st.level.number <= lastNudgeLevel &&
+      _nudges < maxNudgesPerLevel &&
+      st.win == null &&
+      !st.session.isOver;
+
+  /// Restarts the idle countdown after any input.
+  void _armIdle() {
+    _idle?.cancel();
+    final st = state;
+    if (st == null || !_nudgeable(st)) return;
+    _idle = Timer(idleNudgeDelay, () => unawaited(_nudge()));
+  }
+
+  /// Tests: fire the idle nudge now.
+  Future<void> debugIdleNudge() => _nudge();
+
+  /// Shows the next solver move with the hand pointer, free of charge.
+  Future<void> _nudge() async {
+    final st = state;
+    if (st == null || !ref.mounted || !_nudgeable(st)) return;
+    if (st.intro != null || st.hint != null || st.hintBusy || st.blocked) {
+      return;
+    }
+    final session = st.session;
+    if (session.selected != null) return;
+    final rev = session.revision;
+    SolveResult r;
+    try {
+      r = await _s.solver.solve(
+        session.board,
+        session.level.objective,
+        maxNodes: budgetFor(hintBudget, session.board),
+        isStale: () =>
+            !ref.mounted ||
+            !identical(_session, session) ||
+            session.revision != rev,
+      );
+    } on Object catch (e, stack) {
+      _s.crash.record(e, stack, context: {'where': 'nudge'});
+      return;
+    }
+    if (!ref.mounted) return;
+    final now = state;
+    if (now == null ||
+        !identical(now.session, session) ||
+        session.revision != rev ||
+        session.selected != null ||
+        now.hint != null ||
+        !r.isSolved ||
+        r.path.isEmpty) {
+      return;
+    }
+    _nudges++;
+    state = now.copyWith(hint: () => r.path.first);
+    _s.analytics.log(AnalyticsEvent.idleNudgeShown, {
+      'level': session.level.id,
+    });
+    _pushHighlights();
   }
 
   void _pushHighlights() {

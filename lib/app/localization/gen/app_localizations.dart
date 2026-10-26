@@ -166,23 +166,11 @@ abstract class AppLocalizations {
   /// **'Close'**
   String get close;
 
-  /// No description provided for @welcomeTitle.
+  /// No description provided for @tutorialWelcome.
   ///
   /// In en, this message translates to:
-  /// **'Welcome to the Atelier'**
-  String get welcomeTitle;
-
-  /// No description provided for @welcomeBody.
-  ///
-  /// In en, this message translates to:
-  /// **'Stack matching coins until they fuse. A short hands-on lesson shows you how.'**
-  String get welcomeBody;
-
-  /// No description provided for @startTutorial.
-  ///
-  /// In en, this message translates to:
-  /// **'Start the lesson'**
-  String get startTutorial;
+  /// **'Welcome to the Atelier! Tap the stack topped with two rubies, then tap the empty tray.'**
+  String get tutorialWelcome;
 
   /// No description provided for @tutorialMove.
   ///
@@ -889,8 +877,50 @@ abstract class AppLocalizations {
   /// No description provided for @removeAdsDesc.
   ///
   /// In en, this message translates to:
-  /// **'Removes the occasional ad between levels. Optional reward videos stay available only if you choose them.'**
+  /// **'Removes the banner and the occasional ad between levels. Optional reward videos stay available only if you choose them.'**
   String get removeAdsDesc;
+
+  /// No description provided for @adPrivacyChoices.
+  ///
+  /// In en, this message translates to:
+  /// **'Ad privacy choices'**
+  String get adPrivacyChoices;
+
+  /// No description provided for @updateRequiredTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Update needed'**
+  String get updateRequiredTitle;
+
+  /// No description provided for @updateRequiredBody.
+  ///
+  /// In en, this message translates to:
+  /// **'This version of Coin Atelier is no longer supported. Please update to keep playing; your progress is kept.'**
+  String get updateRequiredBody;
+
+  /// No description provided for @updateOptionalTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Update available'**
+  String get updateOptionalTitle;
+
+  /// No description provided for @updateOptionalBody.
+  ///
+  /// In en, this message translates to:
+  /// **'A new version of Coin Atelier is ready with improvements and fixes.'**
+  String get updateOptionalBody;
+
+  /// No description provided for @updateNow.
+  ///
+  /// In en, this message translates to:
+  /// **'Update'**
+  String get updateNow;
+
+  /// No description provided for @updateLater.
+  ///
+  /// In en, this message translates to:
+  /// **'Later'**
+  String get updateLater;
 
   /// No description provided for @removeAdsOwned.
   ///
@@ -1063,7 +1093,7 @@ abstract class AppLocalizations {
   /// No description provided for @privacyBody.
   ///
   /// In en, this message translates to:
-  /// **'Coin Atelier works fully offline. Your progress is stored only on this device. Gameplay statistics are collected only if you opt in, and contain no personal information. No advertising or purchase services are active in this build.'**
+  /// **'Share anonymous statistics (level progress, region and app version) so we can tune the puzzles. No name, account or contact details. You can change this anytime in Settings.'**
   String get privacyBody;
 
   /// No description provided for @supportBody.
@@ -1491,6 +1521,90 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'A tray seals when it is full of one kind of coin. Taller trays need more coins to fill. Deals drop several coins at once, so keep room to spare.'**
   String get introBodyFill;
+
+  /// No description provided for @coachHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Stuck? Hint shows a move that keeps the level solvable.'**
+  String get coachHint;
+
+  /// No description provided for @coachExtraTray.
+  ///
+  /// In en, this message translates to:
+  /// **'Out of room? Add an extra tray for this level.'**
+  String get coachExtraTray;
+
+  /// No description provided for @privacyTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Help improve the Atelier?'**
+  String get privacyTitle;
+
+  /// No description provided for @privacyAccept.
+  ///
+  /// In en, this message translates to:
+  /// **'Share stats'**
+  String get privacyAccept;
+
+  /// No description provided for @privacyDecline.
+  ///
+  /// In en, this message translates to:
+  /// **'No thanks'**
+  String get privacyDecline;
+
+  /// No description provided for @guideHand.
+  ///
+  /// In en, this message translates to:
+  /// **'Tap here'**
+  String get guideHand;
+
+  /// No description provided for @tabHome.
+  ///
+  /// In en, this message translates to:
+  /// **'Home'**
+  String get tabHome;
+
+  /// No description provided for @tabMap.
+  ///
+  /// In en, this message translates to:
+  /// **'Map'**
+  String get tabMap;
+
+  /// No description provided for @giftReadyShort.
+  ///
+  /// In en, this message translates to:
+  /// **'Gift'**
+  String get giftReadyShort;
+
+  /// No description provided for @giftTomorrow.
+  ///
+  /// In en, this message translates to:
+  /// **'Tomorrow'**
+  String get giftTomorrow;
+
+  /// No description provided for @giftCollected.
+  ///
+  /// In en, this message translates to:
+  /// **'+{n} gilt collected!'**
+  String giftCollected(int n);
+
+  /// No description provided for @noAdsShort.
+  ///
+  /// In en, this message translates to:
+  /// **'No ads'**
+  String get noAdsShort;
+
+  /// No description provided for @allSolved.
+  ///
+  /// In en, this message translates to:
+  /// **'All solved'**
+  String get allSolved;
+
+  /// No description provided for @chapterLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Chapter {n}'**
+  String chapterLabel(int n);
 }
 
 class _AppLocalizationsDelegate

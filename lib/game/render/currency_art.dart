@@ -158,23 +158,9 @@ abstract final class CurrencyArt {
 
     final enamel = coin.enamel;
     if (enamel != null) {
-      final e = r * 0.5;
-      canvas.drawCircle(c, e + r * 0.03, Paint()..color = coin.metal.dark);
-      canvas.drawCircle(
-        c,
-        e,
-        Paint()
-          ..shader = ui.Gradient.radial(
-            c + Offset(-e * 0.3, -e * 0.4),
-            e * 1.4,
-            [
-              Color.lerp(enamel, const Color(0xFFFFFFFF), 0.35)!,
-              enamel,
-              Color.lerp(enamel, const Color(0xFF000000), 0.45)!,
-            ],
-            const [0, 0.5, 1],
-          ),
-      );
+      // The family's identity colour fills the centre, so the coin reads
+      // by colour first and metal second.
+      _enamel(canvas, c, bimetal ? fieldR * 0.9 : r * 0.6, enamel, coin.metal);
     }
 
     // Text around the rim: on the ring for bimetal coins, else inside the
@@ -191,19 +177,27 @@ abstract final class CurrencyArt {
     }
 
     final m = coin.metal;
-    final emblemMetal = enamel != null ? Metal.silver : m;
+    final onEnamel = enamel != null;
+    final emblemMetal = onEnamel ? Metal.silver : m;
     if (coin.hole) {
       _hole(canvas, c, r * 0.2, m);
       _value(
         canvas,
-        c + Offset(0, -r * 0.42),
+        c + Offset(0, -r * 0.4),
         coin.value,
         r * 0.3,
-        m,
+        emblemMetal,
         strong: colorBlind,
+        onEnamel: onEnamel,
       );
       if (coin.emblem != Emblem.none) {
-        _emblem(canvas, c + Offset(0, r * 0.42), r * 0.17, coin.emblem, m);
+        _emblem(
+          canvas,
+          c + Offset(0, r * 0.4),
+          r * 0.16,
+          coin.emblem,
+          emblemMetal,
+        );
       }
     } else {
       final hasEmblem = coin.emblem != Emblem.none;
@@ -225,6 +219,7 @@ abstract final class CurrencyArt {
         size,
         emblemMetal,
         strong: colorBlind,
+        onEnamel: onEnamel,
       );
       if (coin.unit.isNotEmpty) {
         _label(
@@ -234,6 +229,7 @@ abstract final class CurrencyArt {
           r * (bimetal ? 0.085 : 0.1),
           emblemMetal,
           maxWidth: (bimetal ? fieldR : r * 0.7) * 1.6,
+          onEnamel: onEnamel,
         );
       }
     }
@@ -372,6 +368,64 @@ abstract final class CurrencyArt {
     canvas.restore();
   }
 
+  /// Glossy enamel disc of radius [e] set into [m], with a fine guilloché
+  /// sunburst under the glaze.
+  static void _enamel(Canvas canvas, Offset c, double e, Color tint, Metal m) {
+    final seam = e * 0.06;
+    canvas.drawCircle(
+      c,
+      e + seam,
+      Paint()
+        ..shader = ui.Gradient.linear(
+          c + Offset(-e, -e),
+          c + Offset(e, e),
+          [m.deep, m.dark, m.shine],
+          const [0, 0.5, 1],
+        ),
+    );
+    canvas.drawCircle(
+      c,
+      e,
+      Paint()
+        ..shader = ui.Gradient.radial(
+          c + Offset(-e * 0.3, -e * 0.4),
+          e * 1.45,
+          [
+            Color.lerp(tint, const Color(0xFFFFFFFF), 0.38)!,
+            tint,
+            Color.lerp(tint, const Color(0xFF000000), 0.42)!,
+          ],
+          const [0, 0.45, 1],
+        ),
+    );
+    canvas.save();
+    canvas.clipPath(Path()..addOval(Rect.fromCircle(center: c, radius: e)));
+    final ray = Paint()
+      ..strokeWidth = math.max(0.5, e * 0.012)
+      ..color = const Color(0xFFFFFFFF).withValues(alpha: 0.07);
+    for (var i = 0; i < 36; i++) {
+      final a = i * math.pi * 2 / 36;
+      canvas.drawLine(
+        c + Offset(math.cos(a), math.sin(a)) * e * 0.15,
+        c + Offset(math.cos(a), math.sin(a)) * e,
+        ray,
+      );
+    }
+    // Inner shadow under the metal lip.
+    canvas.drawCircle(
+      c,
+      e,
+      Paint()
+        ..shader = ui.Gradient.radial(
+          c + Offset(e * 0.05, e * 0.07),
+          e,
+          const [Color(0x00000000), Color(0x00000000), Color(0x66000000)],
+          const [0, 0.78, 1],
+        ),
+    );
+    canvas.restore();
+  }
+
   /// Centre hole: a dark well with its far inner wall lit.
   static void _hole(Canvas canvas, Offset c, double h, Metal m) {
     canvas.drawCircle(
@@ -435,6 +489,7 @@ abstract final class CurrencyArt {
     double size,
     Metal m, {
     required bool strong,
+    bool onEnamel = false,
   }) {
     TextPainter tp(Paint fg) => TextPainter(
       text: TextSpan(
@@ -470,10 +525,15 @@ abstract final class CurrencyArt {
     tp(
       Paint()
         ..style = PaintingStyle.stroke
-        ..strokeWidth = math.max(0.6, size * (strong ? 0.07 : 0.035))
+        ..strokeWidth = math.max(
+          0.6,
+          size * (strong ? 0.07 : (onEnamel ? 0.055 : 0.035)),
+        )
         ..color = strong
             ? const Color(0xFF000000)
-            : m.deep.withValues(alpha: 0.7),
+            : (onEnamel
+                  ? const Color(0xE6141418)
+                  : m.deep.withValues(alpha: 0.7)),
     ).paint(canvas, at);
   }
 
@@ -485,6 +545,7 @@ abstract final class CurrencyArt {
     double size,
     Metal m, {
     required double maxWidth,
+    bool onEnamel = false,
   }) {
     TextPainter tp(Color color, double s) => TextPainter(
       text: TextSpan(
@@ -507,6 +568,12 @@ abstract final class CurrencyArt {
       probe = tp(m.deep, s);
     }
     final at = c - Offset(probe.width / 2, probe.height / 2);
+    if (onEnamel) {
+      // Light caption with a dark cast shadow, readable on any enamel.
+      tp(const Color(0xCC000000), s).paint(canvas, at + Offset(0, s * 0.08));
+      tp(const Color(0xFFFFFBF0), s).paint(canvas, at);
+      return;
+    }
     tp(
       m.shine.withValues(alpha: 0.8),
       s,

@@ -4,12 +4,16 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../app/theme/tokens.dart';
 import '../../application/providers.dart';
 import '../../data/save/save_repository.dart';
+import '../common/game_icons.dart';
+import '../common/game_ui.dart';
 import '../common/widgets.dart';
-import '../home/home_screen.dart';
-import '../onboarding/welcome_screen.dart';
+import '../gameplay/gameplay_screen.dart';
+import '../shell/app_shell.dart';
+import '../shell/update_gate.dart';
 
 /// Flow A/B/K entry: loads levels and save, surfaces recovery honestly, then
-/// routes to onboarding (first run) or home.
+/// shows home. A first run goes straight into the lesson on top of home, so
+/// the first move is seconds away and Back never dead-ends.
 class BootScreen extends ConsumerWidget {
   const BootScreen({super.key});
 
@@ -43,6 +47,15 @@ class _ReadyState extends ConsumerState<_Ready> {
     if (_notified) return;
     _notified = true;
     final l = context.l10n;
+    final profile = ref.read(saveProvider).profile;
+    if (!profile.tutorialDone && profile.completions.isEmpty) {
+      final lesson = widget.data.pack.levels.first;
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (!mounted) return;
+        Navigator.of(context)
+            .push(atelierRoute(GameplayScreen(levelId: lesson.id)));
+      });
+    }
     final msg = switch (widget.data.load.recovery) {
       LoadRecovery.fromBackup => l.recoveredFromBackup,
       LoadRecovery.reset => l.recoveredReset,
@@ -56,11 +69,7 @@ class _ReadyState extends ConsumerState<_Ready> {
   }
 
   @override
-  Widget build(BuildContext context) {
-    final profile = ref.watch(saveProvider.select((s) => s.profile));
-    final firstRun = !profile.tutorialDone && profile.completions.isEmpty;
-    return firstRun ? const WelcomeScreen() : const HomeScreen();
-  }
+  Widget build(BuildContext context) => const UpdateGate(child: AppShell());
 }
 
 class _Splash extends StatelessWidget {
@@ -95,9 +104,9 @@ class _Splash extends StatelessWidget {
                       style: Theme.of(context).textTheme.bodyLarge,
                     ),
                     const SizedBox(height: 20),
-                    PrimaryButton(
+                    GameButton(
                       label: l.retry,
-                      icon: Icons.refresh_rounded,
+                      icon: GameGlyph.restart,
                       onPressed: onRetry,
                     ),
                   ] else

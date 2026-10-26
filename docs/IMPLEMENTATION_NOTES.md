@@ -14,7 +14,9 @@ Status as of 2026-10-24. Source specs: `design.md`, `features-and-flows.md`, `ar
 | Content | 40 levels: one authored tutorial plus 39 generated from versioned seeds. Each passes the solver, carries a stored solution proof and is re-verified on device and in CI. | design.md §8 |
 | Audio | Synthesised in code (`tool/generate_audio.dart`) | Original, no licence obligations |
 | Fonts | Fredoka + Nunito (SIL OFL 1.1), bundled | Works offline; credited in-app |
-| Ads / billing / analytics | Behind ports. The adapters shipped now (`UnconfiguredAds`, `UnavailableBilling`, `ConsoleAnalytics`) report "unavailable" honestly. | No account IDs exist yet. Faking success is prohibited (architecture.md §17.8). |
+| Ads | `AdmobAds` behind `AdsPort` on Android/iOS (`UnconfiguredAds` elsewhere). UMP consent, own preloading (`PreloadedAd`: TTL, single-flight, capped backoff), rewarded, interstitial, app-open, anchored adaptive banner. Other networks via AdMob mediation. | Debug/profile always serve Google test units. See "Ads" below. |
+| Billing | Behind `BillingPort`. `UnavailableBilling` reports "unavailable" honestly. | No product IDs yet. Faking success is prohibited (architecture.md §17.8). |
+| Firebase | Analytics, Crashlytics, Firestore player mirror, Firestore version gate, anonymous auth. Falls back to local adapters until `flutterfire configure` runs. | See "Firebase" below. |
 
 ## Layer map
 
@@ -57,3 +59,28 @@ dart run tool/generate_audio.dart              # regenerate sfx/music
 flutter test tool/render_brand_assets_test.dart && tool/apply_brand_assets.sh
 flutter build apk --release
 ```
+
+## Ads
+
+- **Formats and placements.** Rewarded: shop hint (opt-in, always available). Interstitial: after Next on the win screen (`InterstitialPolicy`). App-open: warm return after 30s+ away, never over a level, 4 min after any full-screen ad (`AppOpenPolicy`). Banner: hub, above the tab bar; released while a level covers the hub. Banners, interstitials and app-open wait for the lesson and stop with Remove Ads (`interruptionsAllowed`).
+- **Consent.** `AdmobAds.start()` runs once the lesson is done: UMP consent refresh + form where required, then `MobileAds.initialize()`. Settings shows "Ad privacy choices" when UMP requires it. Release builds never request ads without UMP's `canRequestAds`; debug builds fall back to test ads because sample app ids have no consent message.
+- **Going live.** Fill `AdUnits.androidProduction` / `iosProduction` (`lib/infrastructure/ads/ad_units.dart`), replace the sample app ids in `AndroidManifest.xml` and `ios/Runner/Info.plist`, create the GDPR and US-states messages (and IDFA explainer) in AdMob > Privacy & messaging, publish `app-ads.txt`.
+- **Adding a mediation network.** Add its `gma_mediation_<network>` package, create a mediation group for each ad unit in the AdMob console, and add the network's `SKAdNetworkItems` to Info.plist. No Dart changes: consent from UMP is forwarded to adapters, and adapter init states are logged in debug.
+
+## Firebase
+
+**Connect the project (once):**
+1. `dart pub global activate flutterfire_cli`, `npm i -g firebase-tools`, `firebase login`.
+2. `flutterfire configure` — pick/create the project, Android + iOS. It overwrites the placeholder `lib/firebase_options.dart`, adds `google-services.json` / `GoogleService-Info.plist`, and the Gradle plugins (accept Crashlytics so release mapping files upload).
+3. Console: enable **Authentication > Anonymous**, create **Firestore** (production mode), then `firebase deploy --only firestore:rules` (uses `firestore.rules`).
+4. Create `app_config/android` and `app_config/ios`: `min_build` (int), `latest_build` (int), `store_url` (string), optional `message`.
+5. Link AdMob to Firebase (AdMob > Settings) for ad revenue in Analytics; enable BigQuery export for raw event analysis.
+
+**What is collected, and when.** Everything except crash reports waits for the in-game statistics opt-in (`analyticsConsent`); Analytics collection is off in the manifests until then, so not even `first_open` is sent.
+- Analytics: allow-listed `AnalyticsEvent`s (GA4 names `level_start`, `level_end`, `tutorial_begin`, `tutorial_complete` where they exist, snake_case otherwise); user properties `country`, `app_locale`, `highest_level`, `levels_done` (bucketed), `tutorial_done`, `remove_ads`.
+- Firestore `players/{uid}`: same facts plus platform, version, build, `updated_at`. Writes are deduped and throttled to one per 30s (`SyncThrottle`) and flushed on background; offline writes queue in the Firestore cache.
+- Identity: Firebase anonymous-auth uid, also used as Analytics user id and Crashlytics user id. No hardware ids (Play policy).
+- Crashlytics: always on in release (technical data only), fatal for framework/isolate errors, non-fatal for `crash.record` calls; off in debug.
+- Withdrawing consent or resetting progress deletes `players/{uid}`.
+
+**Scale notes.** Cost is about one config read per launch plus a few player writes per session. If reads grow, move the version gate to Remote Config (free, cached) behind the same `AppUpdatePort`. Consider a Firestore TTL policy on `players.updated_at` to expire abandoned installs, and bump `FirestorePlayerSync.schemaVersion` (and the rules) when the record changes.

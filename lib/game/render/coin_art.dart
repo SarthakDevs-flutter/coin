@@ -220,17 +220,23 @@ abstract final class CoinArt {
   static const brassLight = Color(0xFFFFDE73);
   static const ivory = Color(0xFFFFF8EA);
 
-  /// Style of [family]; in a currency [theme], one derived from the
-  /// denomination's metal (used for edges, particles and flight slices).
+  /// Style of [family]; in a currency [theme], the denomination's outer
+  /// metal for edges and flight slices, and its enamel identity colour for
+  /// particles and highlights.
   static FamilyStyle style(String family, [CoinTheme? theme]) {
     final coin = theme?.coin(family);
     if (coin == null) return styles[family] ?? styles['pearl']!;
     return _currencyStyles[(theme!.id, family)] ??= () {
       final m = coin.outer;
+      final tint = coin.enamel;
       return FamilyStyle(
-        base: m.base,
-        dark: m.dark,
-        light: m.light,
+        base: tint ?? m.base,
+        dark: tint == null
+            ? m.dark
+            : Color.lerp(tint, const Color(0xFF000000), 0.45)!,
+        light: tint == null
+            ? m.light
+            : Color.lerp(tint, const Color(0xFFFFFFFF), 0.4)!,
         glyph: Glyph.star,
         rim: RimPattern.ticks,
         letter: coin.value,

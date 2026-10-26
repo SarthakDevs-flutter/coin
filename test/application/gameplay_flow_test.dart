@@ -31,6 +31,15 @@ class RecordingAnalytics implements AnalyticsPort {
   @override
   void log(AnalyticsEvent event, [Map<String, Object> params = const {}]) =>
       events.add(event);
+
+  final userProperties = <String, String?>{};
+  @override
+  void setUserProperty(String name, String? value) =>
+      userProperties[name] = value;
+  @override
+  void setCollectionEnabled(bool enabled) {}
+  @override
+  void setUserId(String? id) {}
 }
 
 class NoHaptics implements HapticsPort {

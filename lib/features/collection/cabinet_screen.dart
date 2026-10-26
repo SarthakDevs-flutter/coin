@@ -7,6 +7,10 @@ import '../../application/providers.dart';
 import '../../domain/economy/economy.dart';
 import '../../domain/model/families.dart';
 import '../common/names.dart';
+import '../common/game_icons.dart';
+import '../../game/render/theme/coin_themes.dart';
+import '../common/game_ui.dart';
+import '../common/tab_page.dart';
 import '../common/widgets.dart';
 
 /// Collector's cabinet: discovered families and cosmetic finishes. Cosmetics
@@ -22,109 +26,94 @@ class CabinetScreen extends ConsumerWidget {
       saveProvider.select((s) => s.settings.colorBlind),
     );
     final s = ref.read(servicesProvider);
-    return Scaffold(
-      appBar: AppBar(
-        title: Text(l.cabinetTitle),
-        actions: [
-          Padding(
-            padding: const EdgeInsets.only(right: 12),
-            child: GiltBadge(amount: profile.gilt),
-          ),
-        ],
-      ),
-      extendBodyBehindAppBar: true,
-      body: AtelierBackground(
-        child: SafeArea(
-          child: ListView(
-            padding: const EdgeInsets.fromLTRB(
-              AtelierSpacing.md,
-              0,
-              AtelierSpacing.md,
-              32,
-            ),
-            children: [
-              SectionTitle(l.cabinetFamilies),
-              IvoryPanel(
-                child: GridView.count(
-                  crossAxisCount: 4,
-                  shrinkWrap: true,
-                  physics: const NeverScrollableScrollPhysics(),
-                  childAspectRatio: 0.72,
-                  children: [
-                    for (final f in CoinFamilies.all)
-                      _FamilyCell(
-                        family: f,
-                        found: profile.discoveredFamilies.contains(f),
-                        finish: profile.activeFinish,
-                        colorBlind: colorBlind,
-                      ),
-                  ],
-                ),
-              ),
-              SectionTitle(l.finishesTitle),
-              Text(
-                l.finishesNote,
-                style: const TextStyle(
-                  color: AtelierColors.textOnDarkMuted,
-                  fontWeight: FontWeight.w700,
-                ),
-              ),
-              const SizedBox(height: 10),
-              for (final f in CoinFinish.values) ...[
-                IvoryPanel(
-                  padding: const EdgeInsets.all(12),
-                  child: Row(
-                    children: [
-                      for (final fam in const ['jade', 'ruby', 'sapphire'])
-                        CoinIcon(
-                          family: fam,
-                          tier: fam == 'ruby' ? 2 : 1,
-                          size: 44,
-                          finish: f.name,
-                          colorBlind: colorBlind,
-                        ),
-                      const SizedBox(width: 12),
-                      Expanded(
-                        child: Text(
-                          finishDisplayName(context, f),
-                          style: Theme.of(context).textTheme.titleMedium
-                              ?.copyWith(color: AtelierColors.textOnLight),
-                        ),
-                      ),
-                      _FinishAction(
-                        owned: profile.ownedFinishes.contains(f.name),
-                        active: profile.activeFinish == f.name,
-                        cost: f.cost,
-                        affordable: profile.gilt >= f.cost,
-                        onUse: () => ref
-                            .read(saveProvider.notifier)
-                            .updateProfile(
-                              (p) => p.copyWith(activeFinish: f.name),
-                            ),
-                        onBuy: () {
-                          final r = Economy.buyFinish(
-                            ref.read(saveProvider).profile,
-                            f,
-                            now: s.clock.now(),
-                          );
-                          if (!r.isOk) {
-                            showToast(context, l.notEnoughGilt);
-                            return;
-                          }
-                          ref
-                              .read(saveProvider.notifier)
-                              .updateProfile((_) => r.profile);
-                          s.audio.play(Sfx.reward);
-                        },
-                      ),
-                    ],
-                  ),
-                ),
-                const SizedBox(height: 10),
-              ],
-            ],
-          ),
+    return TabPage(
+      title: l.cabinetTitle,
+      child: ListView(
+        padding: const EdgeInsets.fromLTRB(
+          AtelierSpacing.md,
+          0,
+          AtelierSpacing.md,
+          32,
         ),
+        children: [
+          GameSectionTitle(l.cabinetFamilies),
+          GamePanel(
+            child: GridView.count(
+              crossAxisCount: 4,
+              shrinkWrap: true,
+              physics: const NeverScrollableScrollPhysics(),
+              childAspectRatio: 0.72,
+              children: [
+                for (final f in CoinFamilies.all)
+                  _FamilyCell(
+                    family: f,
+                    found: profile.discoveredFamilies.contains(f),
+                    finish: profile.activeFinish,
+                    colorBlind: colorBlind,
+                  ),
+              ],
+            ),
+          ),
+          GameSectionTitle(l.finishesTitle),
+          Text(
+            l.finishesNote,
+            style: const TextStyle(
+              color: AtelierColors.textOnDarkMuted,
+              fontWeight: FontWeight.w700,
+            ),
+          ),
+          const SizedBox(height: 10),
+          for (final f in CoinFinish.values) ...[
+            GamePanel(
+              padding: const EdgeInsets.all(12),
+              child: Row(
+                children: [
+                  for (final fam in const ['jade', 'ruby', 'sapphire'])
+                    CoinIcon(
+                      family: fam,
+                      tier: fam == 'ruby' ? 2 : 1,
+                      size: 44,
+                      finish: f.name,
+                      colorBlind: colorBlind,
+                    ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Text(
+                      finishDisplayName(context, f),
+                      style: Theme.of(context).textTheme.titleMedium
+                          ?.copyWith(color: AtelierColors.textOnLight),
+                    ),
+                  ),
+                  _FinishAction(
+                    owned: profile.ownedFinishes.contains(f.name),
+                    active: profile.activeFinish == f.name,
+                    cost: f.cost,
+                    affordable: profile.gilt >= f.cost,
+                    onUse: () => ref
+                        .read(saveProvider.notifier)
+                        .updateProfile((p) => p.copyWith(activeFinish: f.name)),
+                    onBuy: () {
+                      final r = Economy.buyFinish(
+                        ref.read(saveProvider).profile,
+                        f,
+                        now: s.clock.now(),
+                      );
+                      if (!r.isOk) {
+                        showToast(context, l.notEnoughGilt);
+                        return;
+                      }
+                      ref
+                          .read(saveProvider.notifier)
+                          .updateProfile((_) => r.profile);
+                      s.audio.play(Sfx.reward);
+                    },
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: 10),
+          ],
+        ],
       ),
     );
   }
@@ -198,43 +187,39 @@ class _FinishAction extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final l = context.l10n;
-    final style = FilledButton.styleFrom(
-      minimumSize: const Size(0, AtelierSpacing.tapTarget),
-      foregroundColor: AtelierColors.textOnLight,
-      textStyle: const TextStyle(
-        fontFamily: AtelierFonts.display,
-        fontWeight: FontWeight.w600,
-      ),
-    );
     if (active) {
-      return Chip(
-        label: Text(l.inUse),
-        avatar: const Icon(Icons.check_rounded, size: 18),
-        backgroundColor: const Color(0xFFDFF3EE),
-        side: BorderSide.none,
-        labelStyle: const TextStyle(
-          fontWeight: FontWeight.w800,
-          color: AtelierColors.primaryDeep,
+      // Status, not an action: same look as a button so the column lines up.
+      return IgnorePointer(
+        child: GameButton(
+          label: l.inUse,
+          icon: GameGlyph.check,
+          tone: GameTone.green,
+          fontSize: 15,
+          height: 44,
+          onPressed: () {},
         ),
       );
     }
     if (owned) {
-      return FilledButton(
-        style: style.copyWith(
-          backgroundColor: const WidgetStatePropertyAll(AtelierColors.primary),
-        ),
+      return GameButton(
+        label: l.useFinish,
+        tone: GameTone.blue,
+        fontSize: 15,
+        height: 44,
         onPressed: onUse,
-        child: Text(l.useFinish),
       );
     }
-    return FilledButton(
-      style: style.copyWith(
-        backgroundColor: WidgetStatePropertyAll(
-          affordable ? AtelierColors.accent : const Color(0xFFD6CDBE),
-        ),
+    return GameButton(
+      label: '$cost',
+      tone: affordable ? GameTone.gold : GameTone.grey,
+      leading: const CoinIcon(
+        family: 'amber',
+        size: 22,
+        theme: CoinThemes.atelier,
       ),
+      fontSize: 16,
+      height: 44,
       onPressed: onBuy,
-      child: Text(l.buyForGilt(cost)),
     );
   }
 }

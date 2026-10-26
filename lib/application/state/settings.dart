@@ -10,6 +10,9 @@ final class GameSettings {
     this.analyticsConsent = false,
     this.devOverlay = false,
     this.themeId = 'atelier',
+    this.privacyAsked = false,
+    this.reviewRequests = const [],
+    this.skippedUpdateBuild = 0,
   });
 
   final bool sfx;
@@ -31,6 +34,16 @@ final class GameSettings {
   /// default in presentation.
   final String themeId;
 
+  /// The one-time analytics question after the first wins was answered.
+  final bool privacyAsked;
+
+  /// When the store-rating sheet was requested, oldest first.
+  final List<DateTime> reviewRequests;
+
+  /// Latest build the player chose "Later" for; that optional update is not
+  /// offered again.
+  final int skippedUpdateBuild;
+
   GameSettings copyWith({
     bool? sfx,
     bool? music,
@@ -41,6 +54,9 @@ final class GameSettings {
     bool? analyticsConsent,
     bool? devOverlay,
     String? themeId,
+    bool? privacyAsked,
+    List<DateTime>? reviewRequests,
+    int? skippedUpdateBuild,
   }) => GameSettings(
     sfx: sfx ?? this.sfx,
     music: music ?? this.music,
@@ -51,6 +67,9 @@ final class GameSettings {
     analyticsConsent: analyticsConsent ?? this.analyticsConsent,
     devOverlay: devOverlay ?? this.devOverlay,
     themeId: themeId ?? this.themeId,
+    privacyAsked: privacyAsked ?? this.privacyAsked,
+    reviewRequests: reviewRequests ?? this.reviewRequests,
+    skippedUpdateBuild: skippedUpdateBuild ?? this.skippedUpdateBuild,
   );
 
   Map<String, Object?> toJson() => {
@@ -63,6 +82,9 @@ final class GameSettings {
     'analyticsConsent': analyticsConsent,
     'devOverlay': devOverlay,
     'theme': themeId,
+    'privacyAsked': privacyAsked,
+    'reviews': [for (final t in reviewRequests) t.millisecondsSinceEpoch],
+    'skippedUpdate': skippedUpdateBuild,
   };
 
   factory GameSettings.fromJson(Map<String, Object?> j) => GameSettings(
@@ -75,5 +97,11 @@ final class GameSettings {
     analyticsConsent: (j['analyticsConsent'] as bool?) ?? false,
     devOverlay: (j['devOverlay'] as bool?) ?? false,
     themeId: (j['theme'] as String?) ?? 'atelier',
+    privacyAsked: (j['privacyAsked'] as bool?) ?? false,
+    reviewRequests: [
+      for (final t in (j['reviews'] as List?) ?? const [])
+        if (t is int) DateTime.fromMillisecondsSinceEpoch(t),
+    ],
+    skippedUpdateBuild: (j['skippedUpdate'] as int?) ?? 0,
   );
 }

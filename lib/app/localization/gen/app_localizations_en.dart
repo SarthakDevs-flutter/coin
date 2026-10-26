@@ -50,14 +50,8 @@ class AppLocalizationsEn extends AppLocalizations {
   String get close => 'Close';
 
   @override
-  String get welcomeTitle => 'Welcome to the Atelier';
-
-  @override
-  String get welcomeBody =>
-      'Stack matching coins until they fuse. A short hands-on lesson shows you how.';
-
-  @override
-  String get startTutorial => 'Start the lesson';
+  String get tutorialWelcome =>
+      'Welcome to the Atelier! Tap the stack topped with two rubies, then tap the empty tray.';
 
   @override
   String get tutorialMove =>
@@ -494,7 +488,30 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get removeAdsDesc =>
-      'Removes the occasional ad between levels. Optional reward videos stay available only if you choose them.';
+      'Removes the banner and the occasional ad between levels. Optional reward videos stay available only if you choose them.';
+
+  @override
+  String get adPrivacyChoices => 'Ad privacy choices';
+
+  @override
+  String get updateRequiredTitle => 'Update needed';
+
+  @override
+  String get updateRequiredBody =>
+      'This version of Coin Atelier is no longer supported. Please update to keep playing; your progress is kept.';
+
+  @override
+  String get updateOptionalTitle => 'Update available';
+
+  @override
+  String get updateOptionalBody =>
+      'A new version of Coin Atelier is ready with improvements and fixes.';
+
+  @override
+  String get updateNow => 'Update';
+
+  @override
+  String get updateLater => 'Later';
 
   @override
   String get removeAdsOwned =>
@@ -591,7 +608,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get privacyBody =>
-      'Coin Atelier works fully offline. Your progress is stored only on this device. Gameplay statistics are collected only if you opt in, and contain no personal information. No advertising or purchase services are active in this build.';
+      'Share anonymous statistics (level progress, region and app version) so we can tune the puzzles. No name, account or contact details. You can change this anytime in Settings.';
 
   @override
   String get supportBody =>
@@ -865,4 +882,51 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get introBodyFill =>
       'A tray seals when it is full of one kind of coin. Taller trays need more coins to fill. Deals drop several coins at once, so keep room to spare.';
+
+  @override
+  String get coachHint =>
+      'Stuck? Hint shows a move that keeps the level solvable.';
+
+  @override
+  String get coachExtraTray => 'Out of room? Add an extra tray for this level.';
+
+  @override
+  String get privacyTitle => 'Help improve the Atelier?';
+
+  @override
+  String get privacyAccept => 'Share stats';
+
+  @override
+  String get privacyDecline => 'No thanks';
+
+  @override
+  String get guideHand => 'Tap here';
+
+  @override
+  String get tabHome => 'Home';
+
+  @override
+  String get tabMap => 'Map';
+
+  @override
+  String get giftReadyShort => 'Gift';
+
+  @override
+  String get giftTomorrow => 'Tomorrow';
+
+  @override
+  String giftCollected(int n) {
+    return '+$n gilt collected!';
+  }
+
+  @override
+  String get noAdsShort => 'No ads';
+
+  @override
+  String get allSolved => 'All solved';
+
+  @override
+  String chapterLabel(int n) {
+    return 'Chapter $n';
+  }
 }

@@ -3,7 +3,9 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../app/theme/tokens.dart';
 import '../../application/providers.dart';
-import '../../infrastructure/crash_reporting/local_crash_reporter.dart';
+import '../../application/ports/ports.dart';
+import '../common/game_ui.dart';
+import '../common/tab_page.dart';
 import '../common/widgets.dart';
 
 enum _InfoKind { privacy, support, credits }
@@ -28,9 +30,10 @@ class InfoScreen extends ConsumerWidget {
       _InfoKind.support => (l.support, l.supportBody),
       _InfoKind.credits => (l.credits, l.creditsBody),
     };
-    final recent = s.crash is LocalCrashReporter
-        ? (s.crash as LocalCrashReporter).recent
-        : const <String>[];
+    final recent = switch (s.crash) {
+      final RecentErrorLog log => log.recent,
+      _ => const <String>[],
+    };
     const textStyle = TextStyle(
       color: AtelierColors.textOnLight,
       fontWeight: FontWeight.w700,
@@ -45,10 +48,10 @@ class InfoScreen extends ConsumerWidget {
           child: ListView(
             padding: const EdgeInsets.all(AtelierSpacing.md),
             children: [
-              IvoryPanel(child: Text(body, style: textStyle)),
+              GamePanel(child: Text(body, style: textStyle)),
               if (_kind == _InfoKind.support) ...[
                 const SizedBox(height: 12),
-                IvoryPanel(
+                GamePanel(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
@@ -65,8 +68,8 @@ class InfoScreen extends ConsumerWidget {
                     ],
                   ),
                 ),
-                SectionTitle(l.recentIssues),
-                IvoryPanel(
+                GameSectionTitle(l.recentIssues),
+                GamePanel(
                   child: SelectableText(
                     recent.isEmpty ? l.noIssues : recent.join('\n'),
                     style: const TextStyle(

@@ -10,6 +10,7 @@ import '../../app/theme/tokens.dart';
 import '../../game/render/coin_art.dart';
 import '../../game/render/theme/coin_theme.dart';
 import '../../game/render/theme/coin_themes.dart';
+import 'game_icons.dart';
 import 'scene_backdrop.dart';
 import 'theme_scope.dart';
 
@@ -307,103 +308,6 @@ class _CoinPainter extends CustomPainter {
       old.theme.id != theme.id;
 }
 
-/// The dominant call to action: a raised brass pill.
-class PrimaryButton extends StatelessWidget {
-  const PrimaryButton({
-    super.key,
-    required this.label,
-    required this.onPressed,
-    this.subtitle,
-    this.icon,
-    this.color = AtelierColors.accent,
-    this.large = false,
-  });
-
-  final String label;
-  final String? subtitle;
-  final IconData? icon;
-  final VoidCallback? onPressed;
-  final Color color;
-  final bool large;
-
-  @override
-  Widget build(BuildContext context) {
-    final enabled = onPressed != null;
-    final base = enabled ? color : AtelierColors.disabled;
-    final onDark = base.computeLuminance() < 0.4;
-    final ink = onDark ? AtelierColors.textOnDark : AtelierColors.textOnLight;
-    final inkShadow = onDark
-        ? const [Shadow(color: Color(0x99000000), offset: Offset(0, 2))]
-        : const <Shadow>[];
-    return Semantics(
-      button: true,
-      enabled: enabled,
-      label: subtitle == null ? label : '$label, $subtitle',
-      excludeSemantics: true,
-      child: _Pressable(
-        onTap: onPressed,
-        child: GoldFrame(
-          radius: large ? 28 : 22,
-          width: large ? 3.5 : 3,
-          fill: [
-            Color.lerp(base, Colors.white, 0.28)!,
-            base,
-            Color.lerp(base, Colors.black, 0.25)!,
-          ],
-          child: Container(
-            constraints: BoxConstraints(
-              minHeight: large ? 66 : 48,
-              minWidth: 134,
-            ),
-            padding: EdgeInsets.symmetric(
-              horizontal: large ? 28 : 20,
-              vertical: large ? 10 : 6,
-            ),
-            child: Row(
-              mainAxisSize: MainAxisSize.min,
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                if (icon != null) ...[
-                  Icon(icon, color: ink, size: large ? 30 : 22),
-                  const SizedBox(width: 10),
-                ],
-                Flexible(
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Text(
-                        label,
-                        textAlign: TextAlign.center,
-                        style: TextStyle(
-                          fontFamily: AtelierFonts.display,
-                          fontWeight: FontWeight.w700,
-                          fontSize: large ? 26 : 18,
-                          color: ink,
-                          shadows: inkShadow,
-                        ),
-                      ),
-                      if (subtitle != null)
-                        Text(
-                          subtitle!,
-                          textAlign: TextAlign.center,
-                          style: TextStyle(
-                            fontWeight: FontWeight.w800,
-                            fontSize: 13,
-                            color: ink.withValues(alpha: 0.8),
-                          ),
-                        ),
-                    ],
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-}
-
 /// Round icon button with a count badge, used for boosters and HUD.
 class RoundAction extends StatelessWidget {
   const RoundAction({
@@ -417,7 +321,7 @@ class RoundAction extends StatelessWidget {
     this.size = 56,
   });
 
-  final IconData icon;
+  final GameGlyph icon;
   final String label;
   final VoidCallback? onPressed;
   final String? badge;
@@ -465,13 +369,10 @@ class RoundAction extends StatelessWidget {
                                   color: AtelierColors.accent,
                                 ),
                               )
-                            : GoldShade(
-                                enabled: enabled,
-                                child: Icon(
-                                  icon,
-                                  color: Colors.white,
-                                  size: size * 0.5,
-                                ),
+                            : GameIcon(
+                                icon,
+                                size: size * 0.58,
+                                mono: enabled ? null : const Color(0xFF9C8F80),
                               ),
                       ),
                     ),
@@ -549,7 +450,7 @@ class BarButton extends StatelessWidget {
     required this.onPressed,
   });
 
-  final IconData icon;
+  final GameGlyph icon;
   final String tooltip;
   final VoidCallback? onPressed;
 
@@ -568,123 +469,13 @@ class BarButton extends StatelessWidget {
             shape: BoxShape.circle,
             width: 2.5,
             child: Center(
-              child: GoldShade(
-                enabled: onPressed != null,
-                child: Icon(icon, color: Colors.white, size: 26),
+              child: GameIcon(
+                icon,
+                size: 26,
+                mono: onPressed != null ? null : const Color(0xFF9C8F80),
               ),
             ),
           ),
-        ),
-      ),
-    ),
-  );
-}
-
-/// Gilt balance chip.
-class GiltBadge extends StatelessWidget {
-  const GiltBadge({super.key, required this.amount});
-
-  final int amount;
-
-  @override
-  Widget build(BuildContext context) => Semantics(
-    label: context.l10n.giltAmount(amount),
-    excludeSemantics: true,
-    child: GoldFrame(
-      radius: 20,
-      width: 2,
-      fill: const [Color(0xFFFFF8E8), Color(0xFFF0DDB8)],
-      padding: const EdgeInsets.only(left: 2, right: 14),
-      child: SizedBox(
-        height: 34,
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            const CoinIcon(
-              family: 'amber',
-              tier: 1,
-              size: 32,
-              theme: CoinThemes.atelier,
-            ),
-            const SizedBox(width: 6),
-            TweenAnimationBuilder<double>(
-              tween: Tween(end: amount.toDouble()),
-              duration: const Duration(milliseconds: 600),
-              builder: (context, v, _) => Text(
-                '${v.round()}',
-                style: const TextStyle(
-                  fontFamily: AtelierFonts.display,
-                  fontWeight: FontWeight.w700,
-                  fontSize: 18,
-                  color: AtelierColors.textOnLight,
-                ),
-              ),
-            ),
-          ],
-        ),
-      ),
-    ),
-  );
-}
-
-/// Ivory card used for panels, dialogs and list tiles.
-class IvoryPanel extends StatelessWidget {
-  const IvoryPanel({
-    super.key,
-    required this.child,
-    this.padding = const EdgeInsets.all(18),
-  });
-
-  final Widget child;
-  final EdgeInsets padding;
-
-  @override
-  Widget build(BuildContext context) => Container(
-    padding: padding,
-    decoration: BoxDecoration(
-      color: AtelierColors.surface,
-      borderRadius: const BorderRadius.all(AtelierRadii.md),
-      border: Border.all(color: AtelierColors.accent, width: 2),
-      boxShadow: const [
-        BoxShadow(
-          color: Color(0x55000000),
-          blurRadius: 18,
-          offset: Offset(0, 8),
-        ),
-      ],
-    ),
-    // Transparent Material so list tiles can paint ink on the panel.
-    child: Material(
-      type: MaterialType.transparency,
-      child: DefaultTextStyle.merge(
-        style: const TextStyle(color: AtelierColors.textOnLight),
-        child: IconTheme.merge(
-          data: const IconThemeData(color: AtelierColors.textOnLight),
-          child: child,
-        ),
-      ),
-    ),
-  );
-}
-
-class SectionTitle extends StatelessWidget {
-  const SectionTitle(this.text, {super.key});
-
-  final String text;
-
-  @override
-  Widget build(BuildContext context) => Padding(
-    padding: const EdgeInsets.fromLTRB(4, 22, 4, 10),
-    child: Semantics(
-      header: true,
-      child: Text(
-        text.toUpperCase(),
-        style: const TextStyle(
-          fontFamily: AtelierFonts.display,
-          fontWeight: FontWeight.w600,
-          fontSize: 14,
-          letterSpacing: 1.4,
-          color: AtelierColors.accent,
         ),
       ),
     ),

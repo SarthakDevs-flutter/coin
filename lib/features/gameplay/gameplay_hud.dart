@@ -99,26 +99,48 @@ class GoalTiles extends StatelessWidget {
   final String finish;
   final bool colorBlind;
 
+  static const double maxTileWidth = 60;
+  static const double minTileWidth = 34;
+
   @override
   Widget build(BuildContext context) {
     final l = context.l10n;
-    return Wrap(
-      spacing: 8,
-      runSpacing: 8,
-      children: [
-        for (final g in goals)
-          _GoalTile(
-            key: keys.putIfAbsent(g.key, GlobalKey.new),
-            goal: g,
-            shown: g.remaining + (inFlight[g.key] ?? 0),
-            bump: bumps[g.key] ?? 0,
-            finish: finish,
-            colorBlind: colorBlind,
-            label: g.key.startsWith('tier')
-                ? l.goalForge(g.tier, g.remaining)
-                : l.goalSeal(familyDisplayName(context, g.family), g.remaining),
-          ),
-      ],
+    // Always one row: tiles shrink to fit rather than wrapping onto a
+    // second row, which would steal height from the board.
+    return LayoutBuilder(
+      builder: (context, box) {
+        final n = math.max(1, goals.length);
+        final spacing = n > 6 ? 5.0 : 8.0;
+        final width = box.maxWidth.isFinite
+            ? ((box.maxWidth - spacing * (n - 1)) / n).clamp(
+                minTileWidth,
+                maxTileWidth,
+              )
+            : maxTileWidth;
+        return Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            for (final (i, g) in goals.indexed) ...[
+              if (i > 0) SizedBox(width: spacing),
+              _GoalTile(
+                key: keys.putIfAbsent(g.key, GlobalKey.new),
+                goal: g,
+                width: width,
+                shown: g.remaining + (inFlight[g.key] ?? 0),
+                bump: bumps[g.key] ?? 0,
+                finish: finish,
+                colorBlind: colorBlind,
+                label: g.key.startsWith('tier')
+                    ? l.goalForge(g.tier, g.remaining)
+                    : l.goalSeal(
+                        familyDisplayName(context, g.family),
+                        g.remaining,
+                      ),
+              ),
+            ],
+          ],
+        );
+      },
     );
   }
 }
@@ -127,6 +149,7 @@ class _GoalTile extends StatelessWidget {
   const _GoalTile({
     super.key,
     required this.goal,
+    required this.width,
     required this.shown,
     required this.bump,
     required this.finish,
@@ -135,6 +158,7 @@ class _GoalTile extends StatelessWidget {
   });
 
   final GoalSpec goal;
+  final double width;
   final int shown;
   final int bump;
   final String finish;
@@ -144,6 +168,8 @@ class _GoalTile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final done = shown == 0;
+    // Icon, check and count scale with the tile (60 is the full size).
+    final k = width / GoalTiles.maxTileWidth;
     return Semantics(
       label: label,
       excludeSemantics: true,
@@ -157,37 +183,38 @@ class _GoalTile extends StatelessWidget {
           child: child,
         ),
         child: SizedBox(
-          width: 60,
+          width: width,
           child: GoldFrame(
-            radius: 14,
-            width: 2.5,
+            radius: 14 * k,
+            width: k < 0.8 ? 2 : 2.5,
             fill: done
                 ? const [Color(0xFFE4FBE9), Color(0xFFB4EBC2)]
                 : const [Color(0xFFFFF8E8), Color(0xFFEBD3A6)],
             glow: done ? AtelierColors.primary.withValues(alpha: 0.6) : null,
-            padding: const EdgeInsets.fromLTRB(4, 5, 4, 3),
+            padding: EdgeInsets.fromLTRB(4 * k, 5 * k, 4 * k, 3 * k),
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
                 CoinIcon(
                   family: goal.family,
                   tier: goal.tier,
-                  size: 36,
+                  size: 36 * k,
                   finish: finish,
                   colorBlind: colorBlind,
                 ),
                 done
-                    ? const Icon(
+                    ? Icon(
                         Icons.check_rounded,
                         color: AtelierColors.primaryDeep,
-                        size: 20,
+                        size: 20 * k,
                       )
                     : Text(
                         '$shown',
-                        style: const TextStyle(
+                        maxLines: 1,
+                        style: TextStyle(
                           fontFamily: AtelierFonts.display,
                           fontWeight: FontWeight.w700,
-                          fontSize: 17,
+                          fontSize: math.max(12, 17 * k),
                           height: 1.1,
                           color: AtelierColors.textOnLight,
                         ),

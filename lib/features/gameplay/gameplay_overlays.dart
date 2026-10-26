@@ -16,6 +16,8 @@ import '../../game/render/theme/coin_theme.dart';
 import '../../game/render/theme/coin_themes.dart';
 import '../common/names.dart';
 import '../common/theme_scope.dart';
+import '../common/game_icons.dart';
+import '../common/game_ui.dart';
 import '../common/widgets.dart';
 import 'gameplay_screen.dart';
 
@@ -115,53 +117,37 @@ class _SecondaryButton extends StatelessWidget {
   });
 
   final String label;
-  final IconData? icon;
+  final GameGlyph? icon;
   final VoidCallback? onPressed;
 
   @override
-  Widget build(BuildContext context) => Semantics(
-    button: true,
-    enabled: onPressed != null,
+  Widget build(BuildContext context) => GameButton(
     label: label,
-    excludeSemantics: true,
-    child: GestureDetector(
-      onTap: onPressed,
-      child: GoldFrame(
-        radius: 16,
-        width: 2.5,
-        shadow: false,
-        fill: AtelierColors.walnut,
-        child: SizedBox(
-          height: AtelierSpacing.tapTarget,
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              GoldShade(
-                child: Icon(
-                  icon ?? Icons.chevron_right_rounded,
-                  color: Colors.white,
-                  size: 22,
-                ),
-              ),
-              const SizedBox(width: 6),
-              Flexible(
-                child: Text(
-                  label,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: const TextStyle(
-                    fontFamily: AtelierFonts.display,
-                    fontSize: 16,
-                    fontWeight: FontWeight.w600,
-                    color: AtelierColors.textOnDark,
-                  ),
-                ),
-              ),
-            ],
-          ),
-        ),
-      ),
-    ),
+    icon: icon,
+    tone: GameTone.walnut,
+    expand: true,
+    height: 50,
+    fontSize: 17,
+    onPressed: onPressed,
+  );
+}
+
+/// The main action of a sheet: big green game button, full width.
+class _MainButton extends StatelessWidget {
+  const _MainButton({required this.label, required this.onPressed, this.icon});
+
+  final String label;
+  final GameGlyph? icon;
+  final VoidCallback? onPressed;
+
+  @override
+  Widget build(BuildContext context) => GameButton(
+    label: label,
+    icon: icon,
+    expand: true,
+    height: 60,
+    fontSize: 23,
+    onPressed: onPressed,
   );
 }
 
@@ -270,7 +256,18 @@ class _WinOverlayState extends ConsumerState<WinOverlay>
     if (_leaving) return;
     _leaving = true;
     ref.read(servicesProvider).audio.play(Sfx.tap);
-    await _maybeInterstitial();
+    // At most one interruption per Next: the privacy question once, then a
+    // store-rating request on milestone wins, otherwise a capped ad.
+    final win = widget.state.win!;
+    final settings = ref.read(saveProvider).settings;
+    if (!settings.privacyAsked &&
+        widget.state.level.number >= privacyPromptLevel) {
+      await showPrivacySheet(context, ref);
+    } else if (win.askReview) {
+      await ref.read(gameplayProvider.notifier).requestReview();
+    } else {
+      await _maybeInterstitial();
+    }
     if (!mounted) return;
     final nav = Navigator.of(context);
     if (nextId == null) {
@@ -450,13 +447,11 @@ class _WinOverlayState extends ConsumerState<WinOverlay>
                         0.75,
                         SizedBox(
                           width: double.infinity,
-                          child: PrimaryButton(
+                          child: _MainButton(
                             label: win.nextLevelId == null
                                 ? l.backToMap
                                 : l.nextLevel,
-                            icon: Icons.arrow_forward_rounded,
-                            color: AtelierColors.primary,
-                            large: true,
+                            icon: GameGlyph.play,
                             onPressed: () => _next(win.nextLevelId),
                           ),
                         ),
@@ -470,7 +465,7 @@ class _WinOverlayState extends ConsumerState<WinOverlay>
                             Expanded(
                               child: _SecondaryButton(
                                 label: l.replay,
-                                icon: Icons.replay_rounded,
+                                icon: GameGlyph.restart,
                                 onPressed: c.restart,
                               ),
                             ),
@@ -478,7 +473,7 @@ class _WinOverlayState extends ConsumerState<WinOverlay>
                             Expanded(
                               child: _SecondaryButton(
                                 label: l.backToMap,
-                                icon: Icons.map_rounded,
+                                icon: GameGlyph.map,
                                 onPressed: () => Navigator.of(context).pop(),
                               ),
                             ),
@@ -620,11 +615,7 @@ class BlockedOverlay extends ConsumerWidget {
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          const Icon(
-            Icons.pan_tool_alt_rounded,
-            size: 48,
-            color: AtelierColors.accentDeep,
-          ),
+          const GameIcon(GameGlyph.lock, size: 52),
           const SizedBox(height: 6),
           _Title(l.blockedTitle),
           const SizedBox(height: 8),
@@ -633,9 +624,9 @@ class BlockedOverlay extends ConsumerWidget {
           if (s.canUndo) ...[
             SizedBox(
               width: double.infinity,
-              child: PrimaryButton(
+              child: _MainButton(
                 label: l.undo,
-                icon: Icons.undo_rounded,
+                icon: GameGlyph.undo,
                 onPressed: c.undo,
               ),
             ),
@@ -644,20 +635,20 @@ class BlockedOverlay extends ConsumerWidget {
           if (!s.bonusUsed && trays > 0 && !s.level.isTutorial) ...[
             _SecondaryButton(
               label: '${l.extraTray} (${l.owned(trays)})',
-              icon: Icons.add_box_rounded,
+              icon: GameGlyph.extraTray,
               onPressed: c.useBonusTray,
             ),
             const SizedBox(height: 10),
           ],
           _SecondaryButton(
             label: l.restart,
-            icon: Icons.restart_alt_rounded,
+            icon: GameGlyph.restart,
             onPressed: c.restart,
           ),
           const SizedBox(height: 10),
           _SecondaryButton(
             label: l.backToMap,
-            icon: Icons.map_rounded,
+            icon: GameGlyph.map,
             onPressed: () => Navigator.of(context).pop(),
           ),
         ],
@@ -746,9 +737,9 @@ class IntroOverlay extends StatelessWidget {
           const SizedBox(height: 20),
           SizedBox(
             width: double.infinity,
-            child: PrimaryButton(
+            child: _MainButton(
               label: l.gotIt,
-              icon: Icons.check_rounded,
+              icon: GameGlyph.check,
               onPressed: onDone,
             ),
           ),
@@ -909,16 +900,16 @@ class _PauseSheet extends ConsumerWidget {
             const SizedBox(height: 12),
             _Title(l.pausedTitle),
             const SizedBox(height: 16),
-            PrimaryButton(
+            _MainButton(
               label: l.resume,
-              icon: Icons.play_arrow_rounded,
+              icon: GameGlyph.play,
               onPressed: () => Navigator.pop(context),
             ),
             const SizedBox(height: 10),
             if (!tutorial) ...[
               _SecondaryButton(
                 label: l.restart,
-                icon: Icons.restart_alt_rounded,
+                icon: GameGlyph.restart,
                 onPressed: () async {
                   final nav = Navigator.of(context);
                   final ok =
@@ -938,7 +929,7 @@ class _PauseSheet extends ConsumerWidget {
             ],
             _SecondaryButton(
               label: l.backToMap,
-              icon: Icons.map_rounded,
+              icon: GameGlyph.map,
               onPressed: () {
                 c.onBackground();
                 Navigator.of(context)
@@ -1030,3 +1021,75 @@ bool _uses(GameplayState state, SpecialCoinType type) => state
     .initialState
     .stacks
     .any((s) => s.coins.any((c) => c.specialType == type));
+
+/// Level after whose win the one-time analytics question appears: after two
+/// real wins, before the first interstitial can be eligible.
+const int privacyPromptLevel = 3;
+
+/// One-time, equal-weight analytics consent question (onboarding §3.5).
+/// Closing the sheet without choosing counts as "No thanks".
+Future<void> showPrivacySheet(BuildContext context, WidgetRef ref) async {
+  // Read before awaiting: the caller may be gone when the sheet closes.
+  final save = ref.read(saveProvider.notifier);
+  final analytics = ref.read(servicesProvider).analytics;
+  final accepted = await showModalBottomSheet<bool>(
+    context: context,
+    isScrollControlled: true,
+    backgroundColor: AtelierColors.surface,
+    shape: const RoundedRectangleBorder(
+      borderRadius: BorderRadius.vertical(top: AtelierRadii.lg),
+    ),
+    builder: (ctx) => const _PrivacySheet(),
+  );
+  final yes = accepted ?? false;
+  await save.updateSettings(
+    (s) => s.copyWith(privacyAsked: true, analyticsConsent: yes),
+  );
+  // Logged after the choice is stored, so a "no" is never sent.
+  analytics.log(AnalyticsEvent.privacyPromptResult, {'accepted': yes});
+}
+
+class _PrivacySheet extends StatelessWidget {
+  const _PrivacySheet();
+
+  @override
+  Widget build(BuildContext context) {
+    final l = context.l10n;
+    final nav = Navigator.of(context);
+    return SafeArea(
+      child: Padding(
+        padding: const EdgeInsets.fromLTRB(22, 18, 22, 20),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const GameIcon(GameGlyph.privacy, size: 48),
+            const SizedBox(height: 10),
+            _Title(l.privacyTitle),
+            const SizedBox(height: 10),
+            _Body(l.privacyBody),
+            const SizedBox(height: 20),
+            Row(
+              children: [
+                Expanded(
+                  child: _SecondaryButton(
+                    label: l.privacyDecline,
+                    icon: GameGlyph.close,
+                    onPressed: () => nav.pop(false),
+                  ),
+                ),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: _SecondaryButton(
+                    label: l.privacyAccept,
+                    icon: GameGlyph.check,
+                    onPressed: () => nav.pop(true),
+                  ),
+                ),
+              ],
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}

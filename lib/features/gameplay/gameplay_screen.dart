@@ -16,10 +16,12 @@ import '../../domain/model/objective.dart';
 import '../../domain/progression/player_profile.dart';
 import '../../game/coin_atelier_game.dart';
 import '../../game/render/theme/coin_themes.dart';
+import '../common/game_icons.dart';
 import '../common/names.dart';
 import '../common/widgets.dart';
 import 'gameplay_hud.dart';
 import 'gameplay_overlays.dart';
+import 'guidance.dart';
 
 class GameplayScreen extends ConsumerStatefulWidget {
   const GameplayScreen({super.key, required this.levelId});
@@ -41,6 +43,12 @@ class _GameplayScreenState extends ConsumerState<GameplayScreen> {
   final _gameKey = GlobalKey();
   final _boardKey = GlobalKey();
   final _dealKey = GlobalKey();
+  final _undoKey = GlobalKey();
+  final _hintKey = GlobalKey();
+  final _extraTrayKey = GlobalKey();
+
+  /// Tray rects last laid out by the game; the guide hand follows them.
+  Map<String, Rect> _trayRects = const {};
   final Map<String, GlobalKey> _goalKeys = {};
 
   /// Goal-tile and chain feedback live in notifiers, not screen state: a coin
@@ -99,7 +107,9 @@ class _GameplayScreenState extends ConsumerState<GameplayScreen> {
   void dispose() {
     _goalFx.dispose();
     _chainFx.dispose();
-    _controller.detach(_game);
+    _controller
+      ..leave()
+      ..detach(_game);
     // Persisting mutates providers, which is not allowed mid-teardown.
     final controller = _controller;
     Future(controller.onBackground);
@@ -152,6 +162,42 @@ class _GameplayScreenState extends ConsumerState<GameplayScreen> {
     final topLeft =
         box.localToGlobal(Offset.zero) - game.localToGlobal(Offset.zero);
     _game.setBoardArea(topLeft & box.size);
+    final rects = _game.trayRects;
+    if (!mapEquals(rects, _trayRects)) {
+      setState(() => _trayRects = rects);
+    } else if (rects.isEmpty) {
+      // The game is still loading: look again shortly so the lesson hand
+      // appears without waiting for the first tap.
+      Future<void>.delayed(const Duration(milliseconds: 120), () {
+        if (mounted) setState(() {});
+      });
+    }
+  }
+
+  /// Bounds of the widget behind [key], in game-canvas coordinates.
+  Rect? _rectOf(GlobalKey key) {
+    final box = key.currentContext?.findRenderObject() as RenderBox?;
+    final game = _gameKey.currentContext?.findRenderObject() as RenderBox?;
+    if (box == null || game == null || !box.attached) return null;
+    return (box.localToGlobal(Offset.zero) - game.localToGlobal(Offset.zero)) &
+        box.size;
+  }
+
+  /// Where the guide hand points: the lesson's next tap, or the move a hint
+  /// or idle nudge suggests. Null while anything else has the player's
+  /// attention.
+  Offset? _guideTarget(GameplayState st) {
+    if (st.win != null || st.intro != null || st.blocked || st.coach != null) {
+      return null;
+    }
+    final s = st.session;
+    final step = s.tutorialStep;
+    if (step != null && step.expectUndo) return _rectOf(_undoKey)?.center;
+    final move = step?.move ?? st.hint;
+    if (move == null) return null;
+    if (move.isDeal) return _rectOf(_dealKey)?.center;
+    final r = _trayRects[s.selected == move.from ? move.to : move.from];
+    return r == null ? null : Offset(r.center.dx, r.top + r.height * 0.4);
   }
 
   BoardVisualSettings _visualsFor(GameSettings s, PlayerProfile p) =>
@@ -329,26 +375,55 @@ class _GameplayScreenState extends ConsumerState<GameplayScreen> {
                     ),
                     if (hasDeals)
                       Padding(
-                        padding: const EdgeInsets.only(top: 4, bottom: 4),
-                        child: KeyedSubtree(
-                          key: _dealKey,
-                          child: DealButton(
-                            board: st.session.board,
-                            glow: st.hint?.isDeal ?? false,
-                            finish: profile.activeFinish,
-                            colorBlind: settings.colorBlind,
-                            onPressed:
-                                st.win == null &&
-                                    st.session.board.hasPendingDeals
-                                ? _controller.deal
-                                : null,
+                        padding: const EdgeInsets.fromLTRB(12, 4, 12, 4),
+                        // Scales down on narrow phones instead of
+                        // overflowing when the preview shows 8 coins.
+                        child: FittedBox(
+                          fit: BoxFit.scaleDown,
+                          child: KeyedSubtree(
+                            key: _dealKey,
+                            child: DealButton(
+                              board: st.session.board,
+                              glow: st.hint?.isDeal ?? false,
+                              finish: profile.activeFinish,
+                              colorBlind: settings.colorBlind,
+                              onPressed:
+                                  st.win == null &&
+                                      st.session.board.hasPendingDeals
+                                  ? _controller.deal
+                                  : null,
+                            ),
                           ),
                         ),
                       ),
-                    if (ready) _BottomBar(state: st, profile: profile),
+                    if (ready)
+                      _BottomBar(
+                        state: st,
+                        profile: profile,
+                        undoKey: _undoKey,
+                        hintKey: _hintKey,
+                        extraTrayKey: _extraTrayKey,
+                      ),
                   ],
                 ),
               ),
+              if (ready)
+                if (_guideTarget(st) case final target?)
+                  HandPointer(
+                    target: target,
+                    reducedMotion: settings.reducedMotion,
+                    label: context.l10n.guideHand,
+                  ),
+              if (ready && st.coach != null && st.intro == null)
+                if (_rectOf(st.coach == 'coach_hint' ? _hintKey : _extraTrayKey)
+                    case final anchor?)
+                  CoachBubble(
+                    anchor: anchor,
+                    text: st.coach == 'coach_hint'
+                        ? context.l10n.coachHint
+                        : context.l10n.coachExtraTray,
+                    onDismiss: _controller.dismissCoach,
+                  ),
               if (ready && st.intro != null)
                 IntroOverlay(
                   mechanic: st.intro!,
@@ -407,7 +482,7 @@ class _TopBar extends ConsumerWidget {
       child: Row(
         children: [
           BarButton(
-            icon: Icons.pause_rounded,
+            icon: GameGlyph.pause,
             tooltip: l.pause,
             onPressed: () => showPauseSheet(context, ref, state),
           ),
@@ -418,15 +493,32 @@ class _TopBar extends ConsumerWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Row(
-                    children: [
-                      Text(
-                        l.levelN(level.number),
-                        style: Theme.of(context).textTheme.titleLarge,
-                      ),
-                      const SizedBox(width: 8),
-                      DifficultyBadge(difficulty: level.difficulty),
-                    ],
+                  // The level number always shows in full; the difficulty
+                  // badge drops its label when the row gets tight.
+                  LayoutBuilder(
+                    builder: (context, box) => Row(
+                      children: [
+                        Flexible(
+                          child: FittedBox(
+                            fit: BoxFit.scaleDown,
+                            alignment: Alignment.centerLeft,
+                            child: Text(
+                              l.levelN(level.number),
+                              maxLines: 1,
+                              softWrap: false,
+                              style: Theme.of(context).textTheme.titleLarge,
+                            ),
+                          ),
+                        ),
+                        if (DifficultyBadge.marks(level.difficulty)) ...[
+                          const SizedBox(width: 6),
+                          DifficultyBadge(
+                            difficulty: level.difficulty,
+                            compact: box.maxWidth < 210,
+                          ),
+                        ],
+                      ],
+                    ),
                   ),
                   Text(
                     total == null
@@ -444,23 +536,36 @@ class _TopBar extends ConsumerWidget {
               ),
             ),
           ),
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.end,
-            children: [
-              _RuleChip(
-                threshold: board.rules.mergeThreshold,
-                fill: board.rules.fillToSeal,
-              ),
-              const SizedBox(height: 4),
-              Text(
-                l.movesCount(board.moveCount),
-                style: const TextStyle(
-                  color: AtelierColors.textOnDarkMuted,
-                  fontWeight: FontWeight.w800,
-                  fontSize: 13,
+          const SizedBox(width: 6),
+          // Capped so a long rule never squeezes the level title.
+          ConstrainedBox(
+            constraints: BoxConstraints(
+              maxWidth: MediaQuery.sizeOf(context).width * 0.38,
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.end,
+              children: [
+                FittedBox(
+                  fit: BoxFit.scaleDown,
+                  alignment: Alignment.centerRight,
+                  child: _RuleChip(
+                    threshold: board.rules.mergeThreshold,
+                    fill: board.rules.fillToSeal,
+                  ),
                 ),
-              ),
-            ],
+                const SizedBox(height: 4),
+                Text(
+                  l.movesCount(board.moveCount),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: const TextStyle(
+                    color: AtelierColors.textOnDarkMuted,
+                    fontWeight: FontWeight.w800,
+                    fontSize: 13,
+                  ),
+                ),
+              ],
+            ),
           ),
         ],
       ),
@@ -518,7 +623,9 @@ class _Callout extends ConsumerWidget {
     String? text;
     var tone = AtelierColors.surface;
     if (step != null) {
+      final first = state.session.tutorialStepIndex == 0;
       text = switch (step.messageKey) {
+        'tutorialMove' when first => l.tutorialWelcome,
         'tutorialMove' => l.tutorialMove,
         'tutorialUndo' => l.tutorialUndo,
         'tutorialRedo' => l.tutorialRedo,
@@ -584,10 +691,21 @@ class _Callout extends ConsumerWidget {
 }
 
 class _BottomBar extends ConsumerWidget {
-  const _BottomBar({required this.state, required this.profile});
+  const _BottomBar({
+    required this.state,
+    required this.profile,
+    required this.undoKey,
+    required this.hintKey,
+    required this.extraTrayKey,
+  });
 
   final GameplayState state;
   final PlayerProfile profile;
+
+  /// Anchors for the guide hand and the one-time tips.
+  final GlobalKey undoKey;
+  final GlobalKey hintKey;
+  final GlobalKey extraTrayKey;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -603,20 +721,23 @@ class _BottomBar extends ConsumerWidget {
         mainAxisAlignment: MainAxisAlignment.spaceEvenly,
         children: [
           RoundAction(
-            icon: Icons.undo_rounded,
+            key: undoKey,
+            icon: GameGlyph.undo,
             label: l.undo,
             highlight: undoStep,
             onPressed: active && (s.canUndo || undoStep) ? c.undo : null,
           ),
           RoundAction(
-            icon: Icons.lightbulb_rounded,
+            key: hintKey,
+            icon: GameGlyph.hint,
             label: l.hint,
             badge: '${profile.count(InventoryItem.hint)}',
             busy: state.hintBusy,
             onPressed: active && !tutorial ? c.useHint : null,
           ),
           RoundAction(
-            icon: Icons.add_box_rounded,
+            key: extraTrayKey,
+            icon: GameGlyph.extraTray,
             label: l.extraTray,
             badge: '${profile.count(InventoryItem.bonusTray)}',
             onPressed: active && !tutorial && !s.bonusUsed
@@ -624,7 +745,7 @@ class _BottomBar extends ConsumerWidget {
                 : null,
           ),
           RoundAction(
-            icon: Icons.restart_alt_rounded,
+            icon: GameGlyph.restart,
             label: l.restart,
             onPressed: active && !tutorial && s.board.moveCount > 0
                 ? () async {

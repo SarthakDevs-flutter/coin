@@ -4,16 +4,27 @@ import 'package:coin/game/render/coin_art.dart';
 import 'package:coin/game/render/currency_art.dart';
 import 'package:coin/game/render/theme/coin_theme.dart';
 import 'package:coin/game/render/theme/coin_themes.dart';
+import 'package:flutter/painting.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {
   test('every currency theme covers every family with a distinct value', () {
     for (final t in CoinThemes.all.where((t) => t.isCurrency)) {
-      final values = {
-        for (final f in CoinFamilies.all) t.coin(f)?.value,
-      };
+      final values = {for (final f in CoinFamilies.all) t.coin(f)?.value};
       expect(values.contains(null), isFalse, reason: t.id);
       expect(values.length, CoinFamilies.all.length, reason: t.id);
+    }
+  });
+
+  test('every currency coin carries its family identity colour', () {
+    for (final t in CoinThemes.all.where((t) => t.isCurrency)) {
+      final tints = <Color?>{};
+      for (final f in CoinFamilies.all) {
+        final tint = t.coin(f)!.enamel;
+        expect(tint, FamilyTint.all[f], reason: '${t.id} $f');
+        tints.add(tint);
+      }
+      expect(tints.length, CoinFamilies.all.length, reason: t.id);
     }
   });
 

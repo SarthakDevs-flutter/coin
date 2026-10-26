@@ -1,3 +1,5 @@
+import 'dart:math' as math;
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -5,17 +7,19 @@ import '../../app/theme/tokens.dart';
 import '../../application/ports/ports.dart';
 import '../../application/providers.dart';
 import '../../domain/economy/economy.dart';
+import '../../domain/model/level.dart';
 import '../../domain/progression/progression.dart';
-import '../chapter_map/chapter_map_screen.dart';
-import '../collection/cabinet_screen.dart';
+import '../common/game_icons.dart';
+import '../common/game_ui.dart';
+import '../common/theme_scope.dart';
 import '../common/widgets.dart';
 import '../gameplay/gameplay_screen.dart';
-import '../settings/settings_screen.dart';
-import '../shop/shop_screen.dart';
-import '../themes/theme_screen.dart';
+import '../shell/app_shell.dart';
 
-/// Continue is dominant; everything else is secondary (design.md §5C).
-class HomeScreen extends ConsumerWidget {
+/// Home tab of the shell (game UI redesign §4.1): the level button is
+/// dominant; the gift and offers sit on side rails; the chapter panel shows
+/// how far the player is through the current chapter.
+class HomeScreen extends ConsumerStatefulWidget {
   const HomeScreen({super.key});
 
   static String chapterName(BuildContext context, int chapter) {
@@ -67,9 +71,55 @@ class HomeScreen extends ConsumerWidget {
   }
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<HomeScreen> createState() => _HomeScreenState();
+}
+
+class _HomeScreenState extends ConsumerState<HomeScreen>
+    with SingleTickerProviderStateMixin {
+  /// Drives the play button's breathing and the ready gift's wobble.
+  late final AnimationController _beat = AnimationController(
+    vsync: this,
+    duration: const Duration(milliseconds: 1400),
+  );
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    final reduced = CoinThemeScope.maybeOf(context)?.reducedMotion ?? false;
+    if (reduced) {
+      _beat
+        ..stop()
+        ..value = 0;
+    } else if (!_beat.isAnimating) {
+      _beat.repeat();
+    }
+  }
+
+  @override
+  void dispose() {
+    _beat.dispose();
+    super.dispose();
+  }
+
+  void _claimGift() {
     final l = context.l10n;
-    final theme = Theme.of(context).textTheme;
+    final s = ref.read(servicesProvider);
+    final r = Economy.claimStipend(
+      ref.read(saveProvider).profile,
+      now: s.clock.now(),
+    );
+    if (!r.isOk) {
+      showToast(context, l.giftClaimed);
+      return;
+    }
+    ref.read(saveProvider.notifier).updateProfile((_) => r.profile);
+    s.audio.play(Sfx.reward);
+    showToast(context, l.giftCollected(Economy.stipendAmount));
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final l = context.l10n;
     final pack = ref.watch(packProvider);
     final save = ref.watch(saveProvider);
     final profile = save.profile;
@@ -81,217 +131,321 @@ class HomeScreen extends ConsumerWidget {
     final done = Progression.completedInChapter(pack, profile, chapter);
     final total = pack.chapter(chapter).length;
     final allDone = Progression.campaignComplete(pack, profile);
-    final now = ref.read(servicesProvider).clock.now();
-    final giftReady = Economy.stipendAvailable(profile, now);
+    final currentIndex = pack.levels.indexWhere((x) => x.id == current.id);
+    final giftReady = Economy.stipendAvailable(
+      profile,
+      ref.read(servicesProvider).clock.now(),
+    );
+    final tabs = ref.read(shellTabProvider.notifier);
 
-    void go(Widget page) => Navigator.of(context).push(atelierRoute(page));
-
-    return Scaffold(
-      body: AtelierBackground(
-        child: SafeArea(
-          child: LayoutBuilder(
-            builder: (context, c) => SingleChildScrollView(
-              padding: const EdgeInsets.symmetric(
-                horizontal: AtelierSpacing.md,
-              ),
-              child: ConstrainedBox(
-                constraints: BoxConstraints(minHeight: c.maxHeight),
+    return LayoutBuilder(
+      builder: (context, box) {
+        final compact = box.maxHeight < 560;
+        return Stack(
+          children: [
+            Positioned.fill(
+              child: Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 20),
                 child: Column(
                   children: [
-                    const SizedBox(height: 8),
-                    Row(
-                      children: [
-                        GiltBadge(amount: profile.gilt),
-                        const Spacer(),
-                        BarButton(
-                          icon: Icons.settings_rounded,
-                          tooltip: l.settings,
-                          onPressed: () => go(const SettingsScreen()),
-                        ),
-                      ],
+                    SizedBox(height: compact ? 4 : 16),
+                    BrandMark(size: compact ? 64 : 92),
+                    const SizedBox(height: 6),
+                    StrokeText(
+                      l.appTitle,
+                      size: compact ? 30 : 38,
+                      color: const Color(0xFFFFE08A),
                     ),
-                    const SizedBox(height: 28),
-                    const BrandMark(size: 96),
-                    const SizedBox(height: 14),
-                    Text(l.appTitle, style: theme.displayMedium),
-                    const SizedBox(height: 28),
-                    IvoryPanel(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            l.chapterN(chapter).toUpperCase(),
-                            style: const TextStyle(
-                              fontFamily: AtelierFonts.display,
-                              letterSpacing: 1.2,
-                              fontWeight: FontWeight.w600,
-                              color: AtelierColors.accentDeep,
-                            ),
-                          ),
-                          const SizedBox(height: 2),
-                          Text(
-                            chapterName(context, chapter),
-                            style: theme.headlineMedium?.copyWith(
-                              color: AtelierColors.textOnLight,
-                            ),
-                          ),
-                          const SizedBox(height: 4),
-                          Text(
-                            chapterDesc(context, chapter),
-                            style: const TextStyle(
-                              color: AtelierColors.textOnLightMuted,
-                              fontWeight: FontWeight.w700,
-                            ),
-                          ),
-                          const SizedBox(height: 14),
-                          ClipRRect(
-                            borderRadius: BorderRadius.circular(6),
-                            child: LinearProgressIndicator(
-                              value: total == 0 ? 0 : done / total,
-                              minHeight: 10,
-                              color: AtelierColors.primary,
-                              backgroundColor: const Color(0xFFEADBC0),
-                            ),
-                          ),
-                          const SizedBox(height: 6),
-                          Text(
-                            l.chapterProgress(done, total),
-                            style: const TextStyle(
-                              color: AtelierColors.textOnLightMuted,
-                              fontWeight: FontWeight.w800,
-                            ),
-                          ),
+                    const Spacer(),
+                    if (!compact && !allDone)
+                      _PathPreview(
+                        levels: [
+                          for (
+                            var k = currentIndex - 1;
+                            k <= currentIndex + 3;
+                            k++
+                          )
+                            if (k >= 0 && k < pack.levels.length)
+                              pack.levels[k],
                         ],
+                        currentId: current.id,
+                        isDone: profile.isCompleted,
+                      ),
+                    const Spacer(),
+                    ConstrainedBox(
+                      constraints: const BoxConstraints(maxWidth: 420),
+                      child: GamePanel(
+                        title: HomeScreen.chapterName(context, chapter),
+                        padding: const EdgeInsets.fromLTRB(16, 14, 16, 16),
+                        child: Column(
+                          children: [
+                            Text(
+                              l.chapterLabel(chapter).toUpperCase(),
+                              style: const TextStyle(
+                                fontFamily: AtelierFonts.display,
+                                fontWeight: FontWeight.w600,
+                                letterSpacing: 1.4,
+                                color: AtelierColors.accentDeep,
+                              ),
+                            ),
+                            const SizedBox(height: 10),
+                            _ChapterProgress(done: done, total: total),
+                          ],
+                        ),
                       ),
                     ),
-                    const SizedBox(height: 26),
-                    PrimaryButton(
-                      large: true,
-                      icon: Icons.play_arrow_rounded,
-                      label: l.continueButton,
-                      subtitle: l.levelN(current.number),
-                      onPressed: () => go(GameplayScreen(levelId: current.id)),
-                    ),
-                    if (allDone) ...[
-                      const SizedBox(height: 12),
-                      Text(
-                        l.campaignComplete,
-                        textAlign: TextAlign.center,
-                        style: const TextStyle(
-                          color: AtelierColors.accent,
-                          fontWeight: FontWeight.w800,
+                    SizedBox(height: compact ? 14 : 24),
+                    AnimatedBuilder(
+                      animation: _beat,
+                      builder: (context, child) => Transform.scale(
+                        scale: 1 + 0.04 * math.sin(_beat.value * math.pi * 2),
+                        child: child,
+                      ),
+                      child: ConstrainedBox(
+                        constraints: const BoxConstraints(
+                          minWidth: 230,
+                          maxWidth: 320,
+                        ),
+                        child: GameButton(
+                          expand: true,
+                          height: 74,
+                          fontSize: 32,
+                          label: allDone
+                              ? l.allSolved
+                              : l.levelN(current.number),
+                          onPressed: allDone
+                              ? () => tabs.go(ShellTab.map)
+                              : () => Navigator.of(context).push(
+                                  atelierRoute(
+                                    GameplayScreen(levelId: current.id),
+                                  ),
+                                ),
                         ),
                       ),
-                    ],
-                    const SizedBox(height: 30),
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                      children: [
-                        RoundAction(
-                          icon: Icons.map_rounded,
-                          label: l.chapters,
-                          onPressed: () => go(const ChapterMapScreen()),
-                        ),
-                        RoundAction(
-                          icon: Icons.auto_awesome_mosaic_rounded,
-                          label: l.cabinet,
-                          onPressed: () => go(const CabinetScreen()),
-                        ),
-                        RoundAction(
-                          icon: Icons.public_rounded,
-                          label: l.themes,
-                          onPressed: () => go(const ThemeScreen()),
-                        ),
-                        RoundAction(
-                          icon: Icons.storefront_rounded,
-                          label: l.shop,
-                          onPressed: () => go(const ShopScreen()),
-                        ),
-                      ],
                     ),
-                    const SizedBox(height: 26),
-                    _DailyGift(ready: giftReady),
-                    const SizedBox(height: 24),
+                    SizedBox(height: compact ? 12 : 22),
                   ],
                 ),
               ),
             ),
-          ),
+            Positioned(
+              left: 12,
+              top: compact ? 4 : 12,
+              child: AnimatedBuilder(
+                animation: _beat,
+                builder: (context, child) => Transform.rotate(
+                  angle: giftReady
+                      ? 0.12 *
+                            math.sin(_beat.value * math.pi * 6) *
+                            math.max(0, math.sin(_beat.value * math.pi * 2))
+                      : 0,
+                  child: child,
+                ),
+                child: GameRoundButton(
+                  icon: GameGlyph.gift,
+                  tone: giftReady ? GameTone.blue : GameTone.walnut,
+                  size: 58,
+                  tooltip: l.dailyGift,
+                  badge: giftReady ? '!' : null,
+                  label: giftReady ? l.giftReadyShort : l.giftTomorrow,
+                  onPressed: _claimGift,
+                ),
+              ),
+            ),
+            if (!profile.removeAds)
+              Positioned(
+                right: 12,
+                top: compact ? 4 : 12,
+                child: GameRoundButton(
+                  icon: GameGlyph.noAds,
+                  tone: GameTone.gold,
+                  size: 58,
+                  tooltip: l.removeAdsTitle,
+                  label: l.noAdsShort,
+                  onPressed: () => tabs.go(ShellTab.shop),
+                ),
+              ),
+          ],
+        );
+      },
+    );
+  }
+}
+
+/// Chunky progress track with the chapter chest at its end.
+class _ChapterProgress extends StatelessWidget {
+  const _ChapterProgress({required this.done, required this.total});
+
+  final int done;
+  final int total;
+
+  @override
+  Widget build(BuildContext context) {
+    final f = total == 0 ? 0.0 : (done / total).clamp(0.0, 1.0);
+    return Semantics(
+      label: context.l10n.chapterProgress(done, total),
+      excludeSemantics: true,
+      child: SizedBox(
+        height: 44,
+        child: Stack(
+          clipBehavior: Clip.none,
+          alignment: Alignment.centerLeft,
+          children: [
+            Container(
+              margin: const EdgeInsets.only(right: 22),
+              height: 26,
+              decoration: BoxDecoration(
+                color: const Color(0xFF4A2A12),
+                borderRadius: BorderRadius.circular(13),
+                border: Border.all(color: const Color(0xFF2A1407), width: 2),
+              ),
+              padding: const EdgeInsets.all(3),
+              child: Align(
+                alignment: Alignment.centerLeft,
+                child: FractionallySizedBox(
+                  widthFactor: math.max(f, 0.08),
+                  child: DecoratedBox(
+                    decoration: BoxDecoration(
+                      gradient: LinearGradient(
+                        begin: Alignment.topCenter,
+                        end: Alignment.bottomCenter,
+                        colors: [
+                          GameTone.green.ramp[0],
+                          GameTone.green.ramp[2],
+                        ],
+                      ),
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                  ),
+                ),
+              ),
+            ),
+            Positioned.fill(
+              right: 22,
+              child: Center(
+                child: StrokeText('$done / $total', size: 16, strokeWidth: 3),
+              ),
+            ),
+            const Positioned(
+              right: -6,
+              child: GameIcon(GameGlyph.shop, size: 46),
+            ),
+          ],
         ),
       ),
     );
   }
 }
 
-class _DailyGift extends ConsumerWidget {
-  const _DailyGift({required this.ready});
+/// A short stretch of the level road: the last solved level, the current one
+/// (big, green) and what comes next.
+class _PathPreview extends StatelessWidget {
+  const _PathPreview({
+    required this.levels,
+    required this.currentId,
+    required this.isDone,
+  });
 
-  final bool ready;
+  final List<LevelDefinition> levels;
+  final String currentId;
+  final bool Function(String id) isDone;
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final l = context.l10n;
-    final s = ref.read(servicesProvider);
+  Widget build(BuildContext context) => ExcludeSemantics(
+    child: SizedBox(
+      height: 96,
+      child: LayoutBuilder(
+        builder: (context, box) {
+          final n = levels.length;
+          final gap = math.min(box.maxWidth / n, 78.0);
+          final left = (box.maxWidth - gap * (n - 1)) / 2;
+          final centers = [
+            for (var i = 0; i < n; i++)
+              Offset(left + gap * i, 48 + (i.isEven ? 8.0 : -8.0)),
+          ];
+          return Stack(
+            clipBehavior: Clip.none,
+            children: [
+              Positioned.fill(child: CustomPaint(painter: _MiniRoad(centers))),
+              for (var i = 0; i < n; i++)
+                Positioned(
+                  left: centers[i].dx - 34,
+                  top: centers[i].dy - 34,
+                  width: 68,
+                  height: 68,
+                  child: Center(child: _dot(levels[i])),
+                ),
+            ],
+          );
+        },
+      ),
+    ),
+  );
+
+  Widget _dot(LevelDefinition level) {
+    final current = level.id == currentId;
+    final done = isDone(level.id) && !current;
+    final tone = current
+        ? GameTone.green
+        : done
+        ? GameTone.gold
+        : GameTone.grey;
+    final size = current ? 60.0 : 44.0;
     return Container(
-      padding: const EdgeInsets.fromLTRB(12, 10, 12, 10),
+      width: size,
+      height: size,
       decoration: BoxDecoration(
-        color: const Color(0x22000000),
-        borderRadius: const BorderRadius.all(AtelierRadii.md),
-        border: Border.all(color: const Color(0x33FFF8EA)),
+        shape: BoxShape.circle,
+        gradient: LinearGradient(
+          begin: Alignment.topCenter,
+          end: Alignment.bottomCenter,
+          colors: tone.ramp,
+        ),
+        border: Border.all(color: const Color(0xFF2A1407), width: 2),
+        boxShadow: [BoxShadow(color: tone.lip, offset: const Offset(0, 3))],
       ),
-      child: Row(
-        children: [
-          const Icon(
-            Icons.redeem_rounded,
-            color: AtelierColors.accent,
-            size: 30,
-          ),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  l.dailyGift,
-                  style: Theme.of(context).textTheme.titleMedium,
-                ),
-                if (!ready)
-                  Text(
-                    l.giftClaimed,
-                    style: const TextStyle(
-                      color: AtelierColors.textOnDarkMuted,
-                      fontWeight: FontWeight.w700,
-                      fontSize: 13,
-                    ),
-                  ),
-              ],
-            ),
-          ),
-          if (ready)
-            FilledButton(
-              style: FilledButton.styleFrom(
-                backgroundColor: AtelierColors.primary,
-                foregroundColor: AtelierColors.textOnLight,
-                minimumSize: const Size(0, AtelierSpacing.tapTarget),
-                textStyle: const TextStyle(
-                  fontFamily: AtelierFonts.display,
-                  fontWeight: FontWeight.w600,
-                  fontSize: 15,
-                ),
-              ),
-              onPressed: () {
-                final r = Economy.claimStipend(
-                  ref.read(saveProvider).profile,
-                  now: s.clock.now(),
-                );
-                if (!r.isOk) return;
-                ref.read(saveProvider.notifier).updateProfile((_) => r.profile);
-                s.audio.play(Sfx.reward);
-              },
-              child: Text(l.claimGilt(Economy.stipendAmount)),
-            ),
-        ],
-      ),
+      alignment: Alignment.center,
+      child: done
+          ? const GameIcon(GameGlyph.check, size: 26)
+          : StrokeText('${level.number}', size: current ? 24 : 17),
     );
   }
+}
+
+class _MiniRoad extends CustomPainter {
+  _MiniRoad(this.centers);
+
+  final List<Offset> centers;
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    if (centers.length < 2) return;
+    final path = Path()..moveTo(centers.first.dx, centers.first.dy);
+    for (var i = 1; i < centers.length; i++) {
+      final a = centers[i - 1];
+      final b = centers[i];
+      final mx = (a.dx + b.dx) / 2;
+      path.cubicTo(mx, a.dy, mx, b.dy, b.dx, b.dy);
+    }
+    canvas
+      ..drawPath(
+        path,
+        Paint()
+          ..color = const Color(0x88140A04)
+          ..style = PaintingStyle.stroke
+          ..strokeWidth = 18
+          ..strokeCap = StrokeCap.round,
+      )
+      ..drawPath(
+        path,
+        Paint()
+          ..color = const Color(0xFF8A5A2E)
+          ..style = PaintingStyle.stroke
+          ..strokeWidth = 12
+          ..strokeCap = StrokeCap.round,
+      );
+  }
+
+  @override
+  bool shouldRepaint(_MiniRoad old) => old.centers != centers;
 }

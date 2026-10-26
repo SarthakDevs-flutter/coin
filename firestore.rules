@@ -1,0 +1,46 @@
+rules_version = '2';
+
+// Deploy: firebase deploy --only firestore:rules
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // Version gate, edited from the console or CI only.
+    match /app_config/{platform} {
+      allow read: if true;
+      allow write: if false;
+    }
+
+    // One record per anonymous player; only its owner can touch it.
+    match /players/{uid} {
+      allow read, delete: if isOwner(uid);
+      allow create, update: if isOwner(uid) && validPlayer(request.resource.data);
+    }
+
+    function isOwner(uid) {
+      return request.auth != null && request.auth.uid == uid;
+    }
+
+    function validPlayer(d) {
+      return d.keys().hasOnly([
+          'schema', 'platform', 'app_version', 'build', 'country', 'locale',
+          'highest_level', 'levels_completed', 'tutorial_done', 'remove_ads',
+          'updated_at'])
+        && d.schema is int
+        && d.platform is string && d.platform.size() <= 16
+        && d.app_version is string && d.app_version.size() <= 32
+        && d.build is int
+        && (d.country == null || (d.country is string && d.country.size() <= 3))
+        && d.locale is string && d.locale.size() <= 35
+        && d.highest_level is int && d.highest_level >= 0
+        && d.levels_completed is int && d.levels_completed >= 0
+        && d.tutorial_done is bool
+        && d.remove_ads is bool
+        && d.updated_at == request.time;
+    }
+
+    // Everything else is closed.
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}

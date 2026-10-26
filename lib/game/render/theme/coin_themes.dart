@@ -39,6 +39,7 @@ abstract final class CoinThemes {
     accent: Color(0xFF1E3F9A),
     coins: {
       'jade': CurrencyCoin(
+        enamel: FamilyTint.jade,
         value: '10',
         unit: 'CENT',
         legend: 'EURO CENT',
@@ -47,6 +48,7 @@ abstract final class CoinThemes {
         emblem: Emblem.spire,
       ),
       'ruby': CurrencyCoin(
+        enamel: FamilyTint.ruby,
         value: '1',
         unit: 'CENT',
         legend: 'EURO CENT',
@@ -55,6 +57,7 @@ abstract final class CoinThemes {
         edge: EdgeStyle.smooth,
       ),
       'sapphire': CurrencyCoin(
+        enamel: FamilyTint.sapphire,
         value: '€1',
         unit: 'EURO',
         legend: 'EUROPA',
@@ -64,6 +67,7 @@ abstract final class CoinThemes {
         edge: EdgeStyle.interrupted,
       ),
       'amber': CurrencyCoin(
+        enamel: FamilyTint.amber,
         value: '€2',
         unit: 'EURO',
         legend: 'EUROPA',
@@ -73,6 +77,7 @@ abstract final class CoinThemes {
         edge: EdgeStyle.lettered,
       ),
       'amethyst': CurrencyCoin(
+        enamel: FamilyTint.amethyst,
         value: '50',
         unit: 'CENT',
         legend: 'EURO CENT',
@@ -81,6 +86,7 @@ abstract final class CoinThemes {
         emblem: Emblem.bridge,
       ),
       'pearl': CurrencyCoin(
+        enamel: FamilyTint.pearl,
         value: '5',
         unit: 'CENT',
         legend: 'EURO CENT',
@@ -89,6 +95,7 @@ abstract final class CoinThemes {
         edge: EdgeStyle.smooth,
       ),
       'onyx': CurrencyCoin(
+        enamel: FamilyTint.onyx,
         value: '20',
         unit: 'CENT',
         legend: 'EURO CENT',
@@ -99,6 +106,7 @@ abstract final class CoinThemes {
         emblem: Emblem.spire,
       ),
       'coral': CurrencyCoin(
+        enamel: FamilyTint.coral,
         value: '2',
         unit: 'CENT',
         legend: 'EURO CENT',
@@ -135,6 +143,7 @@ abstract final class CoinThemes {
     accent: Color(0xFFC81E3A),
     coins: {
       'jade': CurrencyCoin(
+        enamel: FamilyTint.jade,
         value: '10',
         unit: 'YEN',
         legend: 'NIPPON',
@@ -143,6 +152,7 @@ abstract final class CoinThemes {
         emblem: Emblem.pagoda,
       ),
       'ruby': CurrencyCoin(
+        enamel: FamilyTint.ruby,
         value: '50',
         unit: 'YEN',
         legend: 'NIPPON',
@@ -152,6 +162,7 @@ abstract final class CoinThemes {
         emblem: Emblem.sakura,
       ),
       'sapphire': CurrencyCoin(
+        enamel: FamilyTint.sapphire,
         value: '5',
         unit: 'YEN',
         legend: 'NIPPON',
@@ -162,6 +173,7 @@ abstract final class CoinThemes {
         emblem: Emblem.riceEar,
       ),
       'amber': CurrencyCoin(
+        enamel: FamilyTint.amber,
         value: '500',
         unit: 'YEN',
         legend: 'NIPPON',
@@ -172,6 +184,7 @@ abstract final class CoinThemes {
         emblem: Emblem.paulownia,
       ),
       'amethyst': CurrencyCoin(
+        enamel: FamilyTint.amethyst,
         value: '1',
         unit: 'YEN',
         legend: 'NIPPON',
@@ -181,6 +194,7 @@ abstract final class CoinThemes {
         emblem: Emblem.sapling,
       ),
       'pearl': CurrencyCoin(
+        enamel: FamilyTint.pearl,
         value: '100',
         unit: 'YEN',
         legend: 'NIPPON',
@@ -189,15 +203,16 @@ abstract final class CoinThemes {
         emblem: Emblem.sakura,
       ),
       'onyx': CurrencyCoin(
+        enamel: FamilyTint.onyx,
         value: '1000',
         unit: 'YEN',
         legend: 'NIPPON',
         name: '1000 yen',
         metal: Metal.silver,
-        enamel: Color(0xFFD23A5E),
         emblem: Emblem.sakura,
       ),
       'coral': CurrencyCoin(
+        enamel: FamilyTint.coral,
         value: '10000',
         unit: 'YEN',
         legend: 'NIPPON',
@@ -234,6 +249,7 @@ abstract final class CoinThemes {
     accent: Color(0xFF1B2F7A),
     coins: {
       'jade': CurrencyCoin(
+        enamel: FamilyTint.jade,
         value: '£1',
         unit: 'ONE POUND',
         name: '1 pound',
@@ -244,6 +260,7 @@ abstract final class CoinThemes {
         emblem: Emblem.rose,
       ),
       'ruby': CurrencyCoin(
+        enamel: FamilyTint.ruby,
         value: '1',
         unit: 'PENNY',
         legend: 'ONE PENNY',
@@ -253,6 +270,7 @@ abstract final class CoinThemes {
         emblem: Emblem.portcullis,
       ),
       'sapphire': CurrencyCoin(
+        enamel: FamilyTint.sapphire,
         value: '50',
         unit: 'PENCE',
         legend: 'FIFTY PENCE',
@@ -263,6 +281,7 @@ abstract final class CoinThemes {
         emblem: Emblem.shield,
       ),
       'amber': CurrencyCoin(
+        enamel: FamilyTint.amber,
         value: '£2',
         unit: 'TWO POUNDS',
         name: '2 pounds',
@@ -272,6 +291,7 @@ abstract final class CoinThemes {
         emblem: Emblem.crown,
       ),
       'amethyst': CurrencyCoin(
+        enamel: FamilyTint.amethyst,
         value: '20',
         unit: 'PENCE',
         legend: 'TWENTY PENCE',
@@ -282,6 +302,7 @@ abstract final class CoinThemes {
         emblem: Emblem.rose,
       ),
       'pearl': CurrencyCoin(
+        enamel: FamilyTint.pearl,
         value: '10',
         unit: 'PENCE',
         legend: 'TEN PENCE',
@@ -290,6 +311,7 @@ abstract final class CoinThemes {
         emblem: Emblem.crown,
       ),
       'onyx': CurrencyCoin(
+        enamel: FamilyTint.onyx,
         value: '2',
         unit: 'PENCE',
         legend: 'TWO PENCE',
@@ -299,6 +321,7 @@ abstract final class CoinThemes {
         emblem: Emblem.thistle,
       ),
       'coral': CurrencyCoin(
+        enamel: FamilyTint.coral,
         value: '5',
         unit: 'PENCE',
         legend: 'FIVE PENCE',
@@ -335,6 +358,7 @@ abstract final class CoinThemes {
     accent: Color(0xFFB4202E),
     coins: {
       'jade': CurrencyCoin(
+        enamel: FamilyTint.jade,
         value: '1¢',
         unit: 'ONE CENT',
         legend: 'LIBERTY',
@@ -344,6 +368,7 @@ abstract final class CoinThemes {
         emblem: Emblem.profile,
       ),
       'ruby': CurrencyCoin(
+        enamel: FamilyTint.ruby,
         value: '25¢',
         unit: 'QUARTER',
         legend: 'LIBERTY',
@@ -352,6 +377,7 @@ abstract final class CoinThemes {
         emblem: Emblem.eagle,
       ),
       'sapphire': CurrencyCoin(
+        enamel: FamilyTint.sapphire,
         value: r'$1',
         unit: 'ONE DOLLAR',
         legend: 'LIBERTY',
@@ -361,6 +387,7 @@ abstract final class CoinThemes {
         emblem: Emblem.torch,
       ),
       'amber': CurrencyCoin(
+        enamel: FamilyTint.amber,
         value: '5¢',
         unit: 'FIVE CENTS',
         legend: 'LIBERTY',
@@ -370,6 +397,7 @@ abstract final class CoinThemes {
         emblem: Emblem.dome,
       ),
       'amethyst': CurrencyCoin(
+        enamel: FamilyTint.amethyst,
         value: r'$5',
         unit: 'FIVE DOLLARS',
         legend: 'LIBERTY',
@@ -378,6 +406,7 @@ abstract final class CoinThemes {
         emblem: Emblem.eagle,
       ),
       'pearl': CurrencyCoin(
+        enamel: FamilyTint.pearl,
         value: '10¢',
         unit: 'ONE DIME',
         legend: 'LIBERTY',
@@ -386,6 +415,7 @@ abstract final class CoinThemes {
         emblem: Emblem.torch,
       ),
       'onyx': CurrencyCoin(
+        enamel: FamilyTint.onyx,
         value: '50¢',
         unit: 'HALF DOLLAR',
         legend: 'LIBERTY',
@@ -395,6 +425,7 @@ abstract final class CoinThemes {
         emblem: Emblem.shield,
       ),
       'coral': CurrencyCoin(
+        enamel: FamilyTint.coral,
         value: r'$10',
         unit: 'TEN DOLLARS',
         legend: 'LIBERTY',
@@ -432,6 +463,7 @@ abstract final class CoinThemes {
     accent: Color(0xFFE8711C),
     coins: {
       'jade': CurrencyCoin(
+        enamel: FamilyTint.jade,
         value: '₹1',
         unit: 'RUPEE',
         legend: 'BHARAT',
@@ -440,6 +472,7 @@ abstract final class CoinThemes {
         emblem: Emblem.lotus,
       ),
       'ruby': CurrencyCoin(
+        enamel: FamilyTint.ruby,
         value: '₹5',
         unit: 'RUPEES',
         legend: 'BHARAT',
@@ -448,6 +481,7 @@ abstract final class CoinThemes {
         emblem: Emblem.wheat,
       ),
       'sapphire': CurrencyCoin(
+        enamel: FamilyTint.sapphire,
         value: '₹10',
         unit: 'RUPEES',
         legend: 'BHARAT',
@@ -458,6 +492,7 @@ abstract final class CoinThemes {
         emblem: Emblem.chakra,
       ),
       'amber': CurrencyCoin(
+        enamel: FamilyTint.amber,
         value: '50',
         unit: 'PAISE',
         legend: 'BHARAT',
@@ -467,6 +502,7 @@ abstract final class CoinThemes {
         emblem: Emblem.chakra,
       ),
       'amethyst': CurrencyCoin(
+        enamel: FamilyTint.amethyst,
         value: '₹20',
         unit: 'RUPEES',
         legend: 'BHARAT',
@@ -478,6 +514,7 @@ abstract final class CoinThemes {
         emblem: Emblem.wheat,
       ),
       'pearl': CurrencyCoin(
+        enamel: FamilyTint.pearl,
         value: '₹2',
         unit: 'RUPEES',
         legend: 'BHARAT',
@@ -486,6 +523,7 @@ abstract final class CoinThemes {
         emblem: Emblem.peacock,
       ),
       'onyx': CurrencyCoin(
+        enamel: FamilyTint.onyx,
         value: '₹50',
         unit: 'RUPEES',
         legend: 'BHARAT',
@@ -495,6 +533,7 @@ abstract final class CoinThemes {
         emblem: Emblem.elephant,
       ),
       'coral': CurrencyCoin(
+        enamel: FamilyTint.coral,
         value: '₹100',
         unit: 'RUPEES',
         legend: 'BHARAT',
@@ -532,6 +571,7 @@ abstract final class CoinThemes {
     accent: Color(0xFF2E9A4E),
     coins: {
       'jade': CurrencyCoin(
+        enamel: FamilyTint.jade,
         value: '₹1',
         unit: 'RUPEE',
         legend: 'SEVEN SISTERS',
@@ -540,6 +580,7 @@ abstract final class CoinThemes {
         emblem: Emblem.teaLeaf,
       ),
       'ruby': CurrencyCoin(
+        enamel: FamilyTint.ruby,
         value: '₹5',
         unit: 'RUPEES',
         legend: 'SEVEN SISTERS',
@@ -548,6 +589,7 @@ abstract final class CoinThemes {
         emblem: Emblem.orchid,
       ),
       'sapphire': CurrencyCoin(
+        enamel: FamilyTint.sapphire,
         value: '₹10',
         unit: 'RUPEES',
         legend: 'SEVEN SISTERS',
@@ -558,6 +600,7 @@ abstract final class CoinThemes {
         emblem: Emblem.rhino,
       ),
       'amber': CurrencyCoin(
+        enamel: FamilyTint.amber,
         value: '50',
         unit: 'PAISE',
         legend: 'SEVEN SISTERS',
@@ -567,6 +610,7 @@ abstract final class CoinThemes {
         emblem: Emblem.hills,
       ),
       'amethyst': CurrencyCoin(
+        enamel: FamilyTint.amethyst,
         value: '₹20',
         unit: 'RUPEES',
         legend: 'SEVEN SISTERS',
@@ -578,6 +622,7 @@ abstract final class CoinThemes {
         emblem: Emblem.hornbill,
       ),
       'pearl': CurrencyCoin(
+        enamel: FamilyTint.pearl,
         value: '₹2',
         unit: 'RUPEES',
         legend: 'SEVEN SISTERS',
@@ -586,6 +631,7 @@ abstract final class CoinThemes {
         emblem: Emblem.orchid,
       ),
       'onyx': CurrencyCoin(
+        enamel: FamilyTint.onyx,
         value: '₹50',
         unit: 'RUPEES',
         legend: 'SEVEN SISTERS',
@@ -595,6 +641,7 @@ abstract final class CoinThemes {
         emblem: Emblem.hornbill,
       ),
       'coral': CurrencyCoin(
+        enamel: FamilyTint.coral,
         value: '₹100',
         unit: 'RUPEES',
         legend: 'SEVEN SISTERS',

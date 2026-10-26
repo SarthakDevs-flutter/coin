@@ -14,8 +14,11 @@ final class StackSlotSpec {
 }
 
 /// Maps (stack, slot) to screen positions for disc stacks inside [area].
-/// Main trays fill the fewest rows that keep coins comfortably large; an
-/// optional workshop row of fixed width sits on top.
+/// Main trays fill the fewest rows that keep coins comfortably large (or,
+/// when no row count is comfortable, the rows that give the biggest coins),
+/// spread evenly so rows differ by at most one tray. An optional workshop
+/// row of fixed width sits on top; while every workshop slot is locked it
+/// only needs room for the lock cards, not a full tray.
 final class BoardLayout {
   BoardLayout._({
     required this.diameter,
@@ -26,7 +29,16 @@ final class BoardLayout {
 
   static const double trayWidthFactor = 1.34;
   static const double gapFactor = 0.24;
+
+  /// Tray width and gap per diameter. Crowded boards switch to slim trays,
+  /// which hug the coins and buy noticeably bigger coins on narrow screens.
+  static const (double, double) _regular = (trayWidthFactor, gapFactor);
+  static const (double, double) _slim = (1.12, 0.14);
   static const double maxDiameter = 104;
+
+  /// Smallest coin the layout aims for. Crowded late boards may go below it
+  /// rather than spill off screen: every row count is scored by the coin size
+  /// that actually fits, so the board always stays inside its area.
   static const double minDiameter = 28;
   static const double comfortableDiameter = 56;
 
@@ -60,6 +72,24 @@ final class BoardLayout {
   static double _rowHeight(double d, int cap) =>
       trayHeight(d, cap) + DiscArt.faceHeight(d) * 0.9;
 
+  /// Height of a locked workshop card, per diameter.
+  static const double lockedCardFactor = 1.9;
+
+  /// Workshop row height including the gap below it. Locked slots hold no
+  /// coins, so a row with none unlocked is only as tall as its cards.
+  static double _workshopRowHeight(double d, int cap, {required bool locked}) =>
+      (locked
+          ? math.min(trayHeight(d, cap), d * lockedCardFactor)
+          : _rowHeight(d, cap)) +
+      d * gapFactor;
+
+  static const int maxRows = 5;
+
+  /// Trays in row [r] of [rows] when [n] trays are spread evenly, larger
+  /// rows first.
+  static int _inRow(int n, int rows, int r) =>
+      n ~/ rows + (r < n % rows ? 1 : 0);
+
   factory BoardLayout.compute(
     Rect area,
     List<StackSlotSpec> stacks, {
@@ -73,42 +103,51 @@ final class BoardLayout {
     final n = main.length;
     final cap = main.fold<int>(1, (m, i) => math.max(m, stacks[i].capacity));
     final hasRow = workshopRow > 0;
-    final rowUnit = hasRow ? _rowHeight(1, workshopCapacity) + gapFactor : 0.0;
-    final rowWidthUnit = hasRow
-        ? workshopRow * trayWidthFactor + (workshopRow - 1) * gapFactor
+    final allLocked = !stacks.any((s) => s.workshopSlot != null);
+    final rowUnit = hasRow
+        ? _workshopRowHeight(1, workshopCapacity, locked: allLocked)
         : 0.0;
-    var best = minDiameter;
+    var best = 0.0;
     var bestRows = 1;
-    for (var rows = 1; rows <= 3; rows++) {
-      final cols = (n / rows).ceil();
-      if (rows > 1 && cols < 2) break;
-      final widthUnit = math.max(
-        cols * trayWidthFactor + (cols - 1) * gapFactor,
-        rowWidthUnit,
-      );
-      final dW = area.width / (widthUnit + frameFactor * 2);
-      final unit = _rowHeight(1, cap);
-      final dH =
-          area.height /
-          (rows * unit + (rows - 1) * gapFactor + rowUnit + frameFactor * 2);
-      final d = math.min(math.min(dW, dH), maxDiameter);
-      if (d >= comfortableDiameter) {
-        best = d;
-        bestRows = rows;
-        break;
-      }
-      if (d > best + 0.5) {
-        best = d;
-        bestRows = rows;
+    var bestSpacing = _regular;
+    for (final spacing in [_regular, _slim]) {
+      // Slim trays only when regular spacing cannot keep coins comfortable.
+      if (spacing == _slim && best >= comfortableDiameter) break;
+      final (wf, gf) = spacing;
+      final rowWidthUnit = hasRow
+          ? workshopRow * wf + (workshopRow - 1) * gf
+          : 0.0;
+      for (var rows = 1; rows <= maxRows; rows++) {
+        final cols = (n / rows).ceil();
+        if (rows > 1 && cols < 2) break;
+        final widthUnit = math.max(cols * wf + (cols - 1) * gf, rowWidthUnit);
+        final dW = area.width / (widthUnit + frameFactor * 2);
+        final unit = _rowHeight(1, cap);
+        final dH =
+            area.height /
+            (rows * unit + (rows - 1) * gf + rowUnit + frameFactor * 2);
+        final d = math.min(math.min(dW, dH), maxDiameter);
+        if (d >= comfortableDiameter) {
+          best = d;
+          bestRows = rows;
+          bestSpacing = spacing;
+          break;
+        }
+        if (d > best + 0.5) {
+          best = d;
+          bestRows = rows;
+          bestSpacing = spacing;
+        }
       }
     }
-    final d = best.clamp(minDiameter, maxDiameter).toDouble();
+    final d = math.min(best, maxDiameter);
     final rows = bestRows;
-    final cols = math.max(1, (n / rows).ceil());
-    final trayW = d * trayWidthFactor;
-    final gap = d * gapFactor;
+    final trayW = d * bestSpacing.$1;
+    final gap = d * bestSpacing.$2;
     final rowH = _rowHeight(d, cap);
-    final topRowH = hasRow ? _rowHeight(d, workshopCapacity) + gap : 0.0;
+    final topRowH = hasRow
+        ? _workshopRowHeight(d, workshopCapacity, locked: allLocked)
+        : 0.0;
     final totalH = topRowH + rows * rowH + (rows - 1) * gap;
     final top = area.top + (area.height - totalH) / 2;
 
@@ -118,8 +157,10 @@ final class BoardLayout {
     if (hasRow) {
       final rowW = workshopRow * trayW + (workshopRow - 1) * gap;
       final left = area.left + (area.width - rowW) / 2;
-      final bottom = top + topRowH - gap;
-      final h = trayHeight(d, workshopCapacity);
+      final bottom = top + topRowH - d * gapFactor;
+      final h = allLocked
+          ? math.min(trayHeight(d, workshopCapacity), d * lockedCardFactor)
+          : trayHeight(d, workshopCapacity);
       for (var c = 0; c < workshopRow; c++) {
         final x = left + c * (trayW + gap);
         workshop.add(Rect.fromLTWH(x, bottom - h, trayW, h));
@@ -139,7 +180,7 @@ final class BoardLayout {
     }
     var index = 0;
     for (var r = 0; r < rows; r++) {
-      final inRow = math.min(cols, n - index);
+      final inRow = math.min(_inRow(n, rows, r), n - index);
       if (inRow <= 0) break;
       final rowW = inRow * trayW + (inRow - 1) * gap;
       final left = area.left + (area.width - rowW) / 2;

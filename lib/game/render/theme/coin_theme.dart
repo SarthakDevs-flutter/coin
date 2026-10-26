@@ -59,6 +59,35 @@ enum Emblem {
   hills,
 }
 
+/// Enamel colour that identifies a coin family in every currency theme.
+///
+/// Real coins of one currency share a handful of metals, so on the board
+/// they blur together. Each family gets its own vivid enamel centre (and a
+/// matching stripe on its edge), the same in every theme, so players learn
+/// one colour per family. Hues follow the atelier gems and are spread
+/// around the wheel; emblem, value and shape still differ too.
+abstract final class FamilyTint {
+  static const jade = Color(0xFF1FA34E); // green
+  static const ruby = Color(0xFFD42A35); // red
+  static const sapphire = Color(0xFF2563D9); // blue
+  static const amber = Color(0xFFF39A12); // orange
+  static const amethyst = Color(0xFF8E44D6); // purple
+  static const pearl = Color(0xFF1FB8CF); // cyan
+  static const onyx = Color(0xFF23252C); // black
+  static const coral = Color(0xFFE8509A); // pink
+
+  static const all = <String, Color>{
+    'jade': jade,
+    'ruby': ruby,
+    'sapphire': sapphire,
+    'amber': amber,
+    'amethyst': amethyst,
+    'pearl': pearl,
+    'onyx': onyx,
+    'coral': coral,
+  };
+}
+
 /// One denomination: what a coin family looks like in a currency theme.
 final class CurrencyCoin {
   const CurrencyCoin({
@@ -100,7 +129,7 @@ final class CurrencyCoin {
   /// Centre hole (Japanese 5 and 50 yen).
   final bool hole;
 
-  /// Coloured enamel centre (commemorative coins).
+  /// Coloured enamel centre: the family's identity colour ([FamilyTint]).
   final Color? enamel;
 
   /// Metal of the outer edge: what the edge band shows.

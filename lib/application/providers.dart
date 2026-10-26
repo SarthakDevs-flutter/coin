@@ -25,8 +25,12 @@ final class AppServices {
     required this.ads,
     required this.billing,
     required this.solver,
+    this.review = const NoReview(),
+    this.playerSync = const NoPlayerSync(),
+    this.appUpdate = const NoAppUpdate(),
     this.clock = const SystemClock(),
     this.appVersion = '1.0.0',
+    this.appBuild = 1,
   });
 
   final SaveRepository saves;
@@ -39,8 +43,12 @@ final class AppServices {
   final AdsPort ads;
   final BillingPort billing;
   final SolverRunner solver;
+  final ReviewPort review;
+  final PlayerSyncPort playerSync;
+  final AppUpdatePort appUpdate;
   final Clock clock;
   final String appVersion;
+  final int appBuild;
 }
 
 /// Latest settings, readable from adapters that are created before Riverpod
@@ -142,6 +150,8 @@ final class SaveController extends Notifier<SaveData> {
 
   Future<void> resetProgress() async {
     await _s.saves.wipe();
+    // The backend mirror goes with the local progress.
+    await _s.playerSync.erase();
     await _commit(
       SaveData(profile: PlayerProfile.fresh(), settings: state.settings),
     );
